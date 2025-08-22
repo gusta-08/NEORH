@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro - Sistema de RH</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}?v={{ range(1, 1000) | random }}" type="image/x-icon">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <h1 class="auth-title">Cadastro</h1>
+            
+            <div id="message-area" class="alert" style="display: none;"></div>
+            
+            <form id="register-form" class="auth-form">
+                <div class="form-group">
+                    <label for="name">Nome Completo</label>
+                    <input type="text" id="name" name="name" required placeholder="Digite seu nome completo">
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required placeholder="Digite seu email">
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Senha</label>
+                    <input type="password" id="password" name="password" required placeholder="Crie uma senha" minlength="8">
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirm-password">Confirmar Senha</label>
+                    <input type="password" id="confirm-password" name="confirm-password" required placeholder="Confirme sua senha">
+                </div>
+                
+                <div class="form-group">
+                    <label for="user-type">Tipo de Usuário</label>
+                    <select id="user-type" name="user-type" required>
+                        <option value="funcionario">Funcionário</option>
+                        <option value="gerente">Gerente</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" id="pin-group" style="display: none;">
+                    <label for="pin">PIN de Gerente</label>
+                    <input type="password" id="pin" name="pin" maxlength="10" placeholder="Digite o PIN de gerente">
+                </div>
+                
+                <button type="submit" class="auth-button">Cadastrar</button>
+            </form>
+            
+            <div class="auth-footer">
+                <p>Já tem uma conta? <a href="/">Faça login</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+        document.getElementById('user-type').addEventListener('change', function() {
+            document.getElementById('pin-group').style.display = this.value === 'gerente' ? 'block' : 'none';
+        });
+
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            const userType = document.getElementById('user-type').value;
+            const pin = document.getElementById('pin').value;
+
+            if (password !== confirmPassword) {
+                showMessage('As senhas não coincidem.', 'danger');
+                return;
+            }
+
+            if (userType === 'gerente' && pin.trim() === '') {
+                showMessage('Informe o PIN de gerente.', 'danger');
+                return;
+            }
+
+            try {
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ nome: name, email, senha: password, tipo_usuario: userType, pin: pin })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage(data.message, 'success');
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 2000);
+                } else {
+                    showMessage(data.message || 'Erro ao registrar usuário.', 'danger');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                showMessage('Erro de conexão. Tente novamente.', 'danger');
+            }
+        });
+    </script>
+</body>
+</html>

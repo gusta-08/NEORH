@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatórios - Sistema de RH</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}?v={{ range(1, 1000) | random }}" type="image/x-icon">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body>
+    <header>
+        <nav>
+            <h1>Relatórios</h1>
+            <ul>
+                <li><a href="/dashboard-page">Dashboard</a></li>
+                <li><a href="#" id="logout-button">Sair</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container">
+        <h2>Relatórios Gerenciais</h2>
+        <div id="message-area" class="alert" style="display: none;"></div>
+
+        <section class="report-section">
+            <h3>Relatório de Pontos de Todos os Funcionários</h3>
+            <table id="all-points-table">
+                <thead>
+                    <tr>
+                        <th>Funcionário</th>
+                        <th>Entrada</th>
+                        <th>Saída</th>
+                        <th>Duração</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Pontos serão carregados aqui via JS -->
+                </tbody>
+            </table>
+            <button id="load-all-points">Carregar Relatório de Pontos</button>
+        </section>
+
+        <section class="report-section">
+            <h3>Calendário de Pontos da Equipe</h3>
+            <div class="calendar-controls">
+                <div class="calendar-nav">
+                    <button id="prev-month">&lt; Mês Anterior</button>
+                </div>
+                <div class="calendar-title" id="current-month">Agosto 2025</div>
+                <div class="calendar-nav">
+                    <button id="next-month">Próximo Mês &gt;</button>
+                </div>
+            </div>
+            <div class="filters">
+                <select id="filter-employee">
+                    <option value="">Todos os funcionários</option>
+                    <!-- Opções serão preenchidas via JS -->
+                </select>
+            </div>
+            <div id="calendar-container" class="manager-calendar"></div>
+        </section>
+
+        <section class="report-section">
+            <h3>Relatório de Feedbacks Recebidos</h3>
+            <table id="feedbacks-table">
+                <thead>
+                    <tr>
+                        <th>Autor</th>
+                        <th>Mensagem</th>
+                        <th>Data de Envio</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Feedbacks serão carregados aqui via JS -->
+                </tbody>
+            </table>
+            <button id="load-feedbacks">Carregar Relatório de Feedbacks</button>
+        </section>
+
+        <section class="report-section">
+            <h3>Relatório de Atestados Enviados</h3>
+            <table id="atestados-table">
+                <thead>
+                    <tr>
+                        <th>Funcionário</th>
+                        <th>Motivo</th>
+                        <th>Arquivo</th>
+                        <th>Data de Envio</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Atestados serão carregados aqui via JS -->
+                </tbody>
+            </table>
+            <button id="load-atestados">Carregar Relatório de Atestados</button>
+        </section>
+
+    </main>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            checkUserRole(['gerente']); // Apenas gerentes podem acessar
+
+            document.getElementById('logout-button').addEventListener('click', () => {
+                redirectToLogin();
+            });
+
+            const allPointsTableBody = document.querySelector('#all-points-table tbody');
+            const feedbacksTableBody = document.querySelector('#feedbacks-table tbody');
+            const atestadosTableBody = document.querySelector('#atestados-table tbody');
+
+            async function loadAllPointsReport() {
+                allPointsTableBody.innerHTML = '<tr><td colspan="4">Carregando...</td></tr>';
+                try {
+                    const response = await fetch('/api/gerente/relatorio-pontos', {
+                        method: 'GET',
+                        headers: getAuthHeaders()
+                    });
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        allPointsTableBody.innerHTML = '';
+                        if (data.length > 0) {
+                            data.forEach(ponto => {
+                                const row = allPointsTableBody.insertRow();
+                                row.insertCell().textContent = ponto.funcionario;
+                                row.insertCell().textContent = ponto.entrada ? new Date(ponto.entrada).toLocaleString() : 'N/A';
+                                row.insertCell().textContent = ponto.saida ? new Date(ponto.saida).toLocaleString() : 'Pendente';
+
+                                let duracao = 'N/A';
+                                if (ponto.entrada && ponto.saida) {
+                                    const entrada = new Date(ponto.entrada);
+                                    const saida = new Date(ponto.saida);
+                                    const diffMs = saida - entrada;
+                                    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+                                    const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                                    duracao = `${diffHours}h ${diffMinutes}m`;
+                                }
+                                row.insertCell().textContent = duracao;
+                            });
+                        } else {
+                            allPointsTableBody.innerHTML = '<tr><td colspan="4">Nenhum ponto registrado.</td></tr>';
+                        }
+                    } else {
+                        showMessage(data.message || 'Erro ao carregar relatório de pontos.', 'danger');
+                        allPointsTableBody.innerHTML = `<tr><td colspan="4">${data.message || 'Erro.'}</td></tr>`;
+                    }
+                } catch (error) {
+                    console.error('Erro ao carregar relatório de pontos:', error);
+                    showMessage('Erro de conexão ao carregar relatório de pontos.', 'danger');
+                    allPointsTableBody.innerHTML = `<tr><td colspan="4">Erro de conexão.</td></tr>`;
+                }
+            }
+
+            async function loadFeedbacksReport() {
+                feedbacksTableBody.innerHTML = '<tr><td colspan="3">Carregando...</td></tr>';
+                try {
+                    const response = await fetch('/api/feedbacks', { // Reutiliza a rota existente
+                        method: 'GET',
+                        headers: getAuthHeaders()
+                    });
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        feedbacksTableBody.innerHTML = '';
+                        if (data.length > 0) {
+                            data.forEach(feedback => {
+                                const row = feedbacksTableBody.insertRow();
+                                row.insertCell().textContent = feedback.autor;
+                                row.insertCell().textContent = feedback.mensagem;
+                                row.insertCell().textContent = new Date(feedback.criado_em).toLocaleString();
+                            });
+                        } else {
+                            feedbacksTableBody.innerHTML = '<tr><td colspan="3">Nenhum feedback recebido.</td></tr>';
+                        }
+                    } else {
+                        showMessage(data.message || 'Erro ao carregar relatório de feedbacks.', 'danger');
+                        feedbacksTableBody.innerHTML = `<tr><td colspan="3">${data.message || 'Erro.'}</td></tr>`;
+                    }
+                } catch (error) {
+                    console.error('Erro ao carregar relatório de feedbacks:', error);
+                    showMessage('Erro de conexão ao carregar relatório de feedbacks.', 'danger');
+                    feedbacksTableBody.innerHTML = `<tr><td colspan="3">Erro de conexão.</td></tr>`;
+                }
+            }
+
+            async function loadAtestadosReport() {
+                atestadosTableBody.innerHTML = '<tr><td colspan="5">Carregando...</td></tr>';
+                try {
+                    const response = await fetch('/api/atestados', { // Reutiliza a rota existente
+                        method: 'GET',
+                        headers: getAuthHeaders()
+                    });
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        atestadosTableBody.innerHTML = '';
+                        if (data.length > 0) {
+                            data.forEach(atestado => {
+                                const row = atestadosTableBody.insertRow();
+                                row.insertCell().textContent = atestado.funcionario;
+                                row.insertCell().textContent = atestado.motivo;
+                                const fileLink = document.createElement('a');
+                                fileLink.href = `/static/uploads/${atestado.arquivo}`;
+                                fileLink.textContent = atestado.arquivo;
+                                fileLink.target = '_blank'; // Abre em nova aba
+                                row.insertCell().appendChild(fileLink);
+                                row.insertCell().textContent = new Date(atestado.criado_em).toLocaleString();
+                                row.insertCell().textContent = atestado.status;
+                            });
+                        } else {
+                            atestadosTableBody.innerHTML = '<tr><td colspan="5">Nenhum atestado enviado.</td></tr>';
+                        }
+                    } else {
+                        showMessage(data.message || 'Erro ao carregar relatório de atestados.', 'danger');
+                        atestadosTableBody.innerHTML = `<tr><td colspan="5">${data.message || 'Erro.'}</td></tr>`;
+                    }
+                } catch (error) {
+                    console.error('Erro ao carregar relatório de atestados:', error);
+                    showMessage('Erro de conexão ao carregar relatório de atestados.', 'danger');
+                    atestadosTableBody.innerHTML = `<tr><td colspan="5">Erro de conexão.</td></tr>`;
+                }
+            }
+
+            document.getElementById('load-all-points').addEventListener('click', loadAllPointsReport);
+            document.getElementById('load-feedbacks').addEventListener('click', loadFeedbacksReport);
+            document.getElementById('load-atestados').addEventListener('click', loadAtestadosReport);
+
+            // Carrega todos os relatórios ao iniciar a página
+            loadAllPointsReport();
+            loadFeedbacksReport();
+            loadAtestadosReport();
+        });
+
+// Variáveis para controle do calendário
+let currentDate = new Date();
+let currentMonth = currentDate.getMonth();
+let currentYear = currentDate.getFullYear();
+let selectedEmployee = '';
+
+// Elementos do DOM
+const calendarTitle = document.getElementById('current-month');
+const calendarContainer = document.getElementById('calendar-container');
+const prevMonthBtn = document.getElementById('prev-month');
+const nextMonthBtn = document.getElementById('next-month');
+const employeeFilter = document.getElementById('filter-employee');
+
+// Carrega a lista de funcionários para o filtro
+async function loadEmployeesForFilter() {
+    try {
+        const response = await fetch('/api/gerente/funcionarios', {
+            method: 'GET',
+            headers: getAuthHeaders()
+        });
+        const data = await response.json();
+
+        if (response.ok && data.length > 0) {
+            data.forEach(employee => {
+                const option = document.createElement('option');
+                option.value = employee.id;
+                option.textContent = employee.nome;
+                employeeFilter.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Erro ao carregar funcionários:', error);
+    }
+}
+
+// Atualiza o calendário
+async function updateCalendar() {
+    const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+                       "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+    calendarTitle.textContent = `${monthNames[currentMonth]} ${currentYear}`;
+
+    // Carrega os pontos para o mês selecionado
+    try {
+        let url = `/api/gerente/relatorio-pontos-calendario?month=${currentMonth + 1}&year=${currentYear}`;
+        if (selectedEmployee) {
+            url += `&employee_id=${selectedEmployee}`;
+        }
+
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: getAuthHeaders()
+        });
+        const pontos = await response.json();
+
+        if (response.ok) {
+            renderCalendar(pontos);
+        }
+    } catch (error) {
+        console.error('Erro ao carregar pontos:', error);
+    }
+}
+
+// Renderiza o calendário com os pontos
+function renderCalendar(pontos) {
+    const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    const today = new Date();
+
+    // Organiza os pontos por dia
+    const pontosPorDia = {};
+    pontos.forEach(ponto => {
+        const date = new Date(ponto.entrada);
+        const day = date.getDate();
+        const dateKey = `${currentYear}-${(currentMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+        
+        if (!pontosPorDia[dateKey]) {
+            pontosPorDia[dateKey] = [];
+        }
+        pontosPorDia[dateKey].push(ponto);
+    });
+
+    // Cria a estrutura do calendário
+    let calendarHTML = `
+        <table class="calendar">
+            <thead>
+                <tr>
+                    <th>Dom</th>
+                    <th>Seg</th>
+                    <th>Ter</th>
+                    <th>Qua</th>
+                    <th>Qui</th>
+                    <th>Sex</th>
+                    <th>Sáb</th>
+                </tr>
+            </thead>
+            <tbody>`;
+
+    let date = 1;
+    for (let i = 0; i < 6; i++) {
+        if (date > daysInMonth) break;
+        
+        calendarHTML += '<tr>';
+        
+        for (let j = 0; j < 7; j++) {
+            if (i === 0 && j < firstDay) {
+                calendarHTML += '<td></td>';
+            } else if (date > daysInMonth) {
+                calendarHTML += '<td></td>';
+            } else {
+                const dateKey = `${currentYear}-${(currentMonth + 1).toString().padStart(2, '0')}-${date.toString().padStart(2, '0')}`;
+                const isToday = date === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear();
+                const isWeekend = j === 0 || j === 6;
+                
+                let cellClass = '';
+                if (isToday) cellClass += ' current-day';
+                if (isWeekend) cellClass += ' weekend';
+                
+                calendarHTML += `<td class="${cellClass.trim()}">`;
+                calendarHTML += `<div class="day-number">${date}</div>`;
+                
+                if (pontosPorDia[dateKey]) {
+                    pontosPorDia[dateKey].forEach(ponto => {
+                        const entrada = new Date(ponto.entrada).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                        let saida = ponto.saida ? new Date(ponto.saida).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Pendente';
+                        
+                        calendarHTML += `
+                            <div class="ponto-info">
+                                <strong>${ponto.funcionario}</strong><br>
+                                Entrada: ${entrada}<br>
+                                Saída: ${saida}
+                            </div>`;
+                    });
+                }
+                
+                calendarHTML += '</td>';
+                date++;
+            }
+        }
+        
+        calendarHTML += '</tr>';
+    }
+    
+    calendarHTML += `</tbody></table>`;
+    calendarContainer.innerHTML = calendarHTML;
+}
+
+// Event Listeners
+prevMonthBtn.addEventListener('click', () => {
+    currentMonth--;
+    if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear--;
+    }
+    updateCalendar();
+});
+
+nextMonthBtn.addEventListener('click', () => {
+    currentMonth++;
+    if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+    }
+    updateCalendar();
+});
+
+employeeFilter.addEventListener('change', (e) => {
+    selectedEmployee = e.target.value;
+    updateCalendar();
+});
+
+// Inicialização
+document.addEventListener('DOMContentLoaded', () => {
+    loadEmployeesForFilter();
+    updateCalendar();
+});
+    </script>
+</body>
+</html>

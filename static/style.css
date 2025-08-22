@@ -1,0 +1,1171 @@
+/* Variáveis de cores */
+:root {
+  --navy-blue: #0a192f;
+  --navy-blue-light: #112240;
+  --navy-blue-lighter: #233554;
+  --white: #ffffff;
+  --light-gray: #f8f9fa;
+  --medium-gray: #e9ecef;
+  --dark-gray: #6c757d;
+  --text-dark: #343a40;
+  --success: #28a745;
+  --danger: #dc3545;
+  --warning: #ffc107;
+  --info: #17a2b8;
+  --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-hover: 0 8px 15px rgba(0, 0, 0, 0.15);
+}
+
+/* Reset e estilos base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--light-gray);
+  color: var(--text-dark);
+  line-height: 1.6;
+}
+
+/* Header e Navegação */
+header {
+  background-color: var(--navy-blue);
+  color: var(--white);
+  padding: 0;
+  box-shadow: var(--shadow);
+}
+
+/* Estilo para o header com logo à direita */
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    order: 2; /* Coloca a logo à direita (segunda na ordem) */
+}
+
+.user-info {
+    text-align: left;
+    order: 1; /* Coloca as informações do usuário à esquerda (primeira na ordem) */
+    flex: 1; /* Permite que ocupe o espaço disponível */
+}
+
+.site-logo {
+    height: 100px;
+    width: auto;
+    max-width: 150px;
+    object-fit: contain;
+}
+
+.logo-text {
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--white);
+    display: none; /* Oculta o texto quando a logo está visível */
+}
+
+/* Quando a logo não carrega, mostra o texto */
+.logo-container:has(img[src*="logo"]:not([src=""])) .logo-text {
+    display: none;
+}
+
+.logo-container:not(:has(img[src*="logo"]:not([src=""]))) .logo-text {
+    display: block;
+}
+
+/* Ajustes para o dashboard header */
+.dashboard-header {
+    display: flex;
+    align-items: center;
+    background-color: var(--navy-blue);
+    color: var(--white);
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow);
+}
+
+/* Ajuste para o texto do usuário no header azul */
+.dashboard-header h1 {
+    color: var(--white);
+    margin-bottom: 0.5rem;
+}
+
+.dashboard-header p {
+    margin: 0;
+    color: var(--white);
+}
+
+.dashboard-header strong {
+    font-weight: 600;
+}
+
+/* Responsividade para o header */
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .user-info {
+        text-align: center;
+        width: 100%;
+        order: 1;
+    }
+    
+    .logo-container {
+        order: 2;
+        justify-content: center;
+    }
+    
+    .site-logo {
+        height: 40px;
+    }
+}
+
+/* Estilo para o texto do tipo de usuário */
+.user-type-text {
+    color: var(--white) !important;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    display: inline-block;
+    background-color: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Badge para gerente */
+.gerente-badge {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Badge para funcionário */
+.funcionario-badge {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Estilo para o texto do tipo de usuário */
+.user-type-text {
+    color: var(--navy-blue) !important;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    display: inline-block;
+}
+
+/* Badge para gerente */
+.gerente-badge {
+    background-color: rgba(10, 25, 47, 0.1);
+    border: 1px solid var(--navy-blue);
+}
+
+/* Badge para funcionário */
+.funcionario-badge {
+    background-color: rgba(108, 117, 125, 0.1);
+    border: 1px solid var(--dark-gray);
+    color: var(--dark-gray) !important;
+}
+
+/* Ajuste no dashboard header */
+.dashboard-header p {
+    margin: 0.5rem 0;
+    color: var(--text-dark);
+}
+
+.dashboard-header strong {
+    font-weight: 600;
+}
+
+nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+nav h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+nav ul {
+  display: flex;
+  list-style: none;
+  gap: 1.5rem;
+}
+
+nav ul li a {
+  color: var(--white);
+  text-decoration: none;
+  font-weight: 500;
+  transition: opacity 0.3s;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+}
+
+nav ul li a:hover {
+  background-color: var(--navy-blue-light);
+}
+
+/* Container principal */
+.container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1.5rem;
+}
+
+/* Cards e seções */
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: var(--light-gray);
+}
+
+.auth-card {
+  background-color: var(--white);
+  padding: 2.5rem;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  width: 100%;
+  max-width: 450px;
+}
+
+.auth-title {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: var(--navy-blue);
+  font-size: 1.8rem;
+}
+
+.dashboard-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.dashboard-header {
+  background-color: var(--white);
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow);
+}
+
+.dashboard-header h1 {
+  color: var(--navy-blue);
+  margin-bottom: 0.5rem;
+}
+
+/* Ícones para os cards */
+.card-icon {
+    text-align: center;
+    margin-bottom: 1rem;
+    color: var(--navy-blue);
+    font-size: 2.5rem;
+}
+
+.action-card:hover .card-icon {
+    color: var(--navy-blue-light);
+    transform: scale(1.1);
+    transition: transform 0.3s ease;
+}
+
+/* Ajustes para os cards com ícones */
+.action-card {
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.action-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background-color: var(--navy-blue);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+}
+
+.action-card:hover::before {
+    transform: scaleX(1);
+}
+
+/* Melhorias de responsividade para cards com ícones */
+@media (max-width: 768px) {
+    .card-icon {
+        font-size: 2rem;
+    }
+    
+    .action-card {
+        padding: 1.25rem;
+    }
+}
+
+.user-section, .common-section {
+  background-color: var(--white);
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow);
+}
+
+.user-section h2, .common-section h2 {
+  color: var(--navy-blue);
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--medium-gray);
+}
+
+.action-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.action-card {
+  background-color: var(--white);
+  border: 1px solid var(--medium-gray);
+  border-radius: 8px;
+  padding: 1.5rem;
+  transition: transform 0.3s, box-shadow 0.3s;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.action-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-hover);
+  border-color: var(--navy-blue-light);
+}
+
+.action-card h3 {
+  color: var(--navy-blue);
+  margin-bottom: 0.75rem;
+  font-size: 1.25rem;
+}
+
+.action-card p {
+  color: var(--dark-gray);
+  margin-bottom: 1.25rem;
+  flex-grow: 1;
+}
+
+.card-button {
+  display: inline-block;
+  background-color: var(--navy-blue);
+  color: var(--white);
+  padding: 0.6rem 1.25rem;
+  text-decoration: none;
+  border-radius: 4px;
+  font-weight: 500;
+  transition: background-color 0.3s;
+  text-align: center;
+}
+
+.card-button:hover {
+  background-color: var(--navy-blue-light);
+}
+
+.dashboard-footer {
+  text-align: center;
+  margin-top: 2rem;
+}
+
+.logout-button {
+  display: inline-block;
+  background-color: var(--danger);
+  color: var(--white);
+  padding: 0.75rem 1.5rem;
+  text-decoration: none;
+  border-radius: 4px;
+  font-weight: 500;
+  transition: background-color 0.3s;
+}
+
+.logout-button:hover {
+  background-color: #bd2130;
+}
+
+/* Formulários */
+.auth-form, .form-section {
+  margin-top: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--navy-blue);
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--medium-gray);
+  border-radius: 4px;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--navy-blue);
+  box-shadow: 0 0 0 3px rgba(10, 25, 47, 0.1);
+}
+
+.auth-button, button[type="submit"] {
+  width: 100%;
+  background-color: var(--navy-blue);
+  color: var(--white);
+  border: none;
+  padding: 0.75rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.auth-button:hover, button[type="submit"]:hover {
+  background-color: var(--navy-blue-light);
+}
+
+.auth-footer {
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+.auth-footer a {
+  color: var(--navy-blue);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.auth-footer a:hover {
+  text-decoration: underline;
+}
+
+/* Tabelas */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  background-color: var(--white);
+  box-shadow: var(--shadow);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+th, td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--medium-gray);
+}
+
+th {
+  background-color: var(--navy-blue);
+  color: var(--white);
+  font-weight: 600;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+tr:hover {
+  background-color: rgba(10, 25, 47, 0.03);
+}
+
+/* Alertas e mensagens */
+.alert {
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.alert.success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.alert.danger {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.alert.warning {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+}
+
+/* Botões de ação */
+.action-button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  margin-right: 0.5rem;
+}
+
+.edit-button {
+  background-color: var(--info);
+  color: var(--white);
+}
+
+.edit-button:hover {
+  background-color: #138496;
+}
+
+.delete-button {
+  background-color: var(--danger);
+  color: var(--white);
+}
+
+.delete-button:hover {
+  background-color: #bd2130;
+}
+
+.view-points-button {
+  background-color: var(--navy-blue);
+  color: var(--white);
+}
+
+.view-points-button:hover {
+  background-color: var(--navy-blue-light);
+}
+
+.approve-button {
+  background-color: var(--success);
+  color: var(--white);
+}
+
+.approve-button:hover {
+  background-color: #218838;
+}
+
+.reject-button {
+  background-color: var(--danger);
+  color: var(--white);
+}
+
+.reject-button:hover {
+  background-color: #bd2130;
+}
+
+/* Modal */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  overflow: auto;
+}
+
+.modal-content {
+  background-color: var(--white);
+  margin: 5% auto;
+  padding: 2rem;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 600px;
+  box-shadow: var(--shadow-hover);
+  position: relative;
+}
+
+.close-button {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  font-size: 1.5rem;
+  font-weight: bold;
+  cursor: pointer;
+  color: var(--dark-gray);
+}
+
+.close-button:hover {
+  color: var(--text-dark);
+}
+
+/* Calendário */
+.calendar-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  background-color: var(--white);
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.calendar-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--navy-blue);
+}
+
+.calendar-nav button {
+  background-color: var(--navy-blue);
+  color: var(--white);
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.calendar-nav button:hover {
+  background-color: var(--navy-blue-light);
+}
+
+.calendar {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: var(--white);
+  box-shadow: var(--shadow);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.calendar th {
+  background-color: var(--navy-blue);
+  color: var(--white);
+  padding: 1rem;
+  text-align: center;
+}
+
+.calendar td {
+  border: 1px solid var(--medium-gray);
+  padding: 0.75rem;
+  height: 100px;
+  vertical-align: top;
+  position: relative;
+}
+
+.day-number {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  color: var(--navy-blue);
+}
+
+.ponto-info {
+  font-size: 0.8rem;
+  margin: 0.15rem 0;
+  padding: 0.3rem;
+  background-color: rgba(10, 25, 47, 0.05);
+  border-radius: 3px;
+  line-height: 1.3;
+}
+
+.current-day {
+  background-color: rgba(10, 25, 47, 0.05);
+}
+
+.weekend {
+  background-color: rgba(108, 117, 125, 0.05);
+}
+
+.ponto-actions {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.ponto-actions button {
+  margin: 0 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background-color: var(--navy-blue);
+  color: var(--white);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  font-weight: 500;
+}
+
+.ponto-actions button:hover {
+  background-color: var(--navy-blue-light);
+}
+
+/* Seções de relatório */
+.report-section {
+  background-color: var(--white);
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow);
+}
+
+.report-section h3 {
+  color: var(--navy-blue);
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--medium-gray);
+}
+
+.report-section button {
+  margin-top: 1rem;
+  padding: 0.75rem 1.5rem;
+  background-color: var(--navy-blue);
+  color: var(--white);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  font-weight: 500;
+}
+
+.report-section button:hover {
+  background-color: var(--navy-blue-light);
+}
+
+/* Imagens de perfil */
+.profile-picture {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--medium-gray);
+}
+
+.profile-pic-small {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--medium-gray);
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  nav {
+    flex-direction: column;
+    padding: 1rem;
+  }
+  
+  nav ul {
+    margin-top: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+  }
+  
+  .action-cards {
+    grid-template-columns: 1fr;
+  }
+  
+  .calendar-controls {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .calendar-nav {
+    display: flex;
+    gap: 0.5rem;
+  }
+  
+  .ponto-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .ponto-actions button {
+    margin: 0;
+  }
+  
+  .modal-content {
+    width: 95%;
+    margin: 10% auto;
+    padding: 1.5rem;
+  }
+}
+
+/* Utilitários */
+.hidden {
+  display: none;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.mb-1 {
+  margin-bottom: 0.5rem;
+}
+
+.mb-2 {
+  margin-bottom: 1rem;
+}
+
+.mt-1 {
+  margin-top: 0.5rem;
+}
+
+.mt-2 {
+  margin-top: 1rem;
+}
+
+/* Estilos para a página de contabilidade */
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.info-item {
+    background: rgba(10, 25, 47, 0.05);
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.info-label {
+    font-size: 0.8rem;
+    color: var(--dark-gray);
+    margin-bottom: 0.5rem;
+}
+
+.info-value {
+    font-weight: bold;
+    color: var(--navy-blue);
+    font-size: 1.1rem;
+}
+
+.valores-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin: 1rem 0;
+}
+
+.valor-item {
+    padding: 0.75rem;
+    border-radius: 6px;
+    text-align: center;
+}
+
+.valor-item.positivo {
+    background: rgba(40, 167, 69, 0.1);
+    border: 1px solid rgba(40, 167, 69, 0.2);
+}
+
+.valor-item.negativo {
+    background: rgba(220, 53, 69, 0.1);
+    border: 1px solid rgba(220, 53, 69, 0.2);
+}
+
+.valor-destaque {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--navy-blue);
+    margin: 0.5rem 0;
+}
+
+.info-small {
+    font-size: 0.8rem;
+    color: var(--dark-gray);
+    margin-top: 0.25rem;
+}
+
+/* Tabelas */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.data-table th,
+.data-table td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--medium-gray);
+}
+
+.data-table th {
+    background: var(--navy-blue);
+    color: white;
+    font-weight: 600;
+}
+
+.data-table tr:hover {
+    background: rgba(10, 25, 47, 0.02);
+}
+
+/* Status badges */
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.status-badge.pago {
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+    border: 1px solid rgba(40, 167, 69, 0.2);
+}
+
+.status-badge.pendente {
+    background: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+    border: 1px solid rgba(255, 193, 7, 0.2);
+}
+
+.status-badge.atrasado {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+    border: 1px solid rgba(220, 53, 69, 0.2);
+}
+
+/* Benefícios */
+.beneficios-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.beneficio-item {
+    padding: 1.5rem;
+    border: 1px solid var(--medium-gray);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.beneficio-item:hover {
+    border-color: var(--navy-blue);
+    box-shadow: var(--shadow);
+}
+
+.beneficio-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.beneficio-header h4 {
+    margin: 0;
+    color: var(--navy-blue);
+}
+
+.beneficio-desc {
+    color: var(--dark-gray);
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.beneficio-valor {
+    font-weight: 600;
+    color: var(--navy-blue);
+}
+
+/* Formulários */
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--medium-gray);
+}
+
+/* Botões */
+.btn-primary {
+    background: var(--navy-blue);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.3s ease;
+}
+
+.btn-primary:hover {
+    background: var(--navy-blue-light);
+}
+
+.btn-success {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.3s ease;
+}
+
+.btn-success:hover {
+    background: #218838;
+}
+
+.btn-secondary {
+    background: var(--dark-gray);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.3s ease;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+}
+
+.btn-info {
+    background: #17a2b8;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.3s ease;
+}
+
+.btn-info:hover {
+    background: #138496;
+}
+
+.btn-icon {
+    background: none;
+    border: none;
+    color: var(--navy-blue);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 4px;
+    transition: background 0.3s ease;
+}
+
+.btn-icon:hover {
+    background: rgba(10, 25, 47, 0.1);
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .grid-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .valores-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .beneficios-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .header-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
+
+/* Seção de contato */
+.contact-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+.contact-buttons {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.header-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.form-select {
+    padding: 0.5rem;
+    border: 1px solid var(--medium-gray);
+    border-radius: 4px;
+    background: white;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}

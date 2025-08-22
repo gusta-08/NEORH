@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adicionar Funcionário - Sistema de RH</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}?v={{ range(1, 1000) | random }}" type="image/x-icon">
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</head>
+<body>
+    <header>
+        <nav>
+            <h1>Adicionar Funcionário</h1>
+            <ul>
+                <li><a href="/dashboard-page">Dashboard</a></li>
+                <li><a href="/gerenciamento-equipe">Gerenciamento de Equipe</a></li>
+                <li><a href="#" id="logout-button">Sair</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container">
+        <h2>Cadastrar Novo Funcionário</h2>
+        <div id="message-area" class="alert" style="display: none;"></div>
+        <form id="add-employee-form">
+            <div class="form-group">
+                <label for="nome">Nome:</label>
+                <input type="text" id="nome" name="nome" required>
+            </div>
+            <div class="form-group">
+                <label for="email">E-mail:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="senha">Senha:</label>
+                <input type="password" id="senha" name="senha" required>
+            </div>
+            <div class="form-group">
+                <label for="telefone">Telefone:</label>
+                <input type="text" id="telefone" name="telefone">
+            </div>
+            <div class="form-group">
+                <label for="foto_perfil">Foto de Perfil:</label>
+                <input type="file" id="foto_perfil" name="foto_perfil" accept="image/*">
+            </div>
+            <button type="submit">Cadastrar Funcionário</button>
+        </form>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            checkUserRole(['gerente']);
+
+            const form = document.getElementById('add-employee-form');
+            if (form) {
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+
+                    const formData = new FormData();
+                    formData.append('nome', document.getElementById('nome').value);
+                    formData.append('email', document.getElementById('email').value);
+                    formData.append('senha', document.getElementById('senha').value);
+                    formData.append('telefone', document.getElementById('telefone').value);
+                    const fotoInput = document.getElementById('foto_perfil');
+                    if (fotoInput && fotoInput.files.length > 0) {
+                        formData.append('foto_perfil', fotoInput.files[0]);
+                    }
+
+                    const token = localStorage.getItem('jwt_token');
+                    try {
+                        const response = await fetch('/cadastrar-funcionario', {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: formData
+                        });
+                        let data;
+                        try {
+                            data = await response.json();
+                        } catch {
+                            data = { message: 'Erro interno no servidor.' };
+                        }
+
+                        if (response.ok) {
+                            showMessage(data.message || 'Funcionário cadastrado com sucesso!', 'success');
+                            form.reset();
+                        } else {
+                            showMessage(data.message || 'Erro ao cadastrar funcionário.', 'danger');
+                        }
+                    } catch (error) {
+                        console.error('Erro ao cadastrar funcionário:', error);
+                        showMessage('Erro de conexão ao cadastrar funcionário.', 'danger');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

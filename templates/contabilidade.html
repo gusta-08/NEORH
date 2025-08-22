@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal do Funcionário - Contabilidade</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+    <style>
+        .hover-scale {
+            transition: transform 0.3s ease;
+        }
+        .hover-scale:hover {
+            transform: scale(1.02);
+        }
+        .progress-bar {
+            height: 8px;
+            border-radius: 4px;
+            background-color: #e0e0e0;
+        }
+        .progress-value {
+            height: 100%;
+            border-radius: 4px;
+            background-color: #4CAF50;
+        }
+        .beneficio-card {
+            border: 1px solid var(--medium-gray);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background: var(--white);
+        }
+        .beneficio-card:hover {
+            border-color: var(--navy-blue-light);
+            box-shadow: var(--shadow);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <h1>Portal do Funcionário - Contabilidade</h1>
+            <ul>
+                <li><a href="/dashboard-page">Dashboard</a></li>
+                <li><a href="#" id="logout-button">Sair</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container">
+        <div id="message-area" class="alert" style="display: none;"></div>
+
+        <!-- Informações do Funcionário -->
+        <section class="beneficio-card">
+            <div class="header-content">
+                <div class="user-info">
+                    <h2 id="employee-name">Carregando...</h2>
+                    <p id="employee-position">Cargo: Carregando...</p>
+                    <p id="employee-id">ID: Carregando...</p>
+                </div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <p class="info-label">Admissão</p>
+                        <p class="info-value" id="admission-date">--/--/----</p>
+                    </div>
+                    <div class="info-item">
+                        <p class="info-label">Tipo Contrato</p>
+                        <p class="info-value" id="contract-type">---</p>
+                    </div>
+                    <div class="info-item">
+                        <p class="info-label">Salário Base</p>
+                        <p class="info-value" id="base-salary">R$ --.--</p>
+                    </div>
+                    <div class="info-item">
+                        <p class="info-label">Banco</p>
+                        <p class="info-value" id="bank-name">---</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dashboard de Informações -->
+        <div class="grid-container">
+            <!-- Salário e Benefícios -->
+            <div class="beneficio-card hover-scale">
+                <h3><i class="fas fa-money-bill-wave"></i> Salário e Benefícios</h3>
+                <div class="salario-info">
+                    <p class="info-label">Salário Líquido (último mês)</p>
+                    <p class="valor-destaque" id="salario-liquido">R$ 0,00</p>
+                    <div class="progress-bar">
+                        <div class="progress-value" id="progress-salario" style="width: 0%"></div>
+                    </div>
+                    <p class="info-small" id="percentual-salario">0% do salário bruto</p>
+                    
+                    <div class="valores-grid">
+                        <div class="valor-item positivo">
+                            <p class="info-label">Abonos</p>
+                            <p class="valor" id="total-abonos">R$ 0,00</p>
+                        </div>
+                        <div class="valor-item negativo">
+                            <p class="info-label">Descontos</p>
+                            <p class="valor" id="total-descontos">R$ 0,00</p>
+                        </div>
+                    </div>
+                    
+                    <button class="btn-primary" onclick="window.location.href='/holerites'">
+                        <i class="fas fa-file-invoice-dollar"></i> Ver Holerites
+                    </button>
+                </div>
+            </div>
+
+            <!-- Férias e Folgas -->
+            <div class="beneficio-card hover-scale">
+                <h3><i class="fas fa-umbrella-beach"></i> Férias e Folgas</h3>
+                <div class="ferias-info">
+                    <p class="info-label">Dias de Férias Disponíveis</p>
+                    <p class="valor-destaque" id="dias-ferias">0 dias</p>
+                    <div class="progress-bar">
+                        <div class="progress-value" style="width: 0%; background-color: #2196F3;"></div>
+                    </div>
+                    <p class="info-small">Até 30 dias acumulados</p>
+                    
+                    <div class="info-ferias">
+                        <p class="info-label">Próximo Período</p>
+                        <p class="valor" id="proximo-periodo">--/--/---- a --/--/----</p>
+                    </div>
+                    
+                    <button class="btn-success">
+                        <i class="fas fa-calendar-plus"></i> Solicitar Férias
+                    </button>
+                </div>
+            </div>
+
+            <!-- Horas Extras -->
+            <div class="beneficio-card hover-scale">
+                <h3><i class="fas fa-clock"></i> Horas Extras</h3>
+                <div class="horas-info">
+                    <p class="info-label">Horas no mês</p>
+                    <p class="valor-destaque" id="total-horas">0 horas</p>
+                    <div class="progress-bar">
+                        <div class="progress-value" style="width: 0%; background-color: #9C27B0;"></div>
+                    </div>
+                    <p class="info-small" id="valor-horas">Valor estimado: R$ 0,00</p>
+                    
+                    <div class="valores-grid">
+                        <div class="valor-item">
+                            <p class="info-label">50%</p>
+                            <p class="valor" id="horas-50">0h</p>
+                        </div>
+                        <div class="valor-item">
+                            <p class="info-label">100%</p>
+                            <p class="valor" id="horas-100">0h</p>
+                        </div>
+                    </div>
+                    
+                    <button class="btn-info">
+                        <i class="fas fa-history"></i> Histórico Completo
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detalhamento Financeiro -->
+        <section class="beneficio-card">
+            <div class="section-header">
+                <h3><i class="fas fa-file-invoice"></i> Detalhamento Financeiro</h3>
+                <div class="header-actions">
+                    <select class="form-select" id="periodo-select">
+                        <option value="3">Últimos 3 meses</option>
+                        <option value="6">Últimos 6 meses</option>
+                        <option value="12">Últimos 12 meses</option>
+                    </select>
+                    <button class="btn-secondary">
+                        <i class="fas fa-download"></i> Exportar
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Mês/Ano</th>
+                            <th>Salário Bruto</th>
+                            <th>Abonos</th>
+                            <th>Descontos</th>
+                            <th>Salário Líquido</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-holerites">
+                        <tr>
+                            <td colspan="7">Carregando dados...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Benefícios Adicionais -->
+        <section class="beneficio-card">
+            <h3><i class="fas fa-gift"></i> Benefícios Adicionais</h3>
+            <div class="beneficios-grid" id="beneficios-container">
+                <div class="beneficio-item">
+                    <div class="beneficio-header">
+                        <i class="fas fa-heart" style="color: #dc3545;"></i>
+                        <h4>Plano de Saúde</h4>
+                    </div>
+                    <p class="beneficio-desc" id="plano-saude-desc">Carregando...</p>
+                    <p class="beneficio-valor" id="plano-saude-valor">Valor mensal: R$ 0,00</p>
+                </div>
+
+                <div class="beneficio-item">
+                    <div class="beneficio-header">
+                        <i class="fas fa-car" style="color: #007bff;"></i>
+                        <h4>Vale Transporte</h4>
+                    </div>
+                    <p class="beneficio-desc" id="vale-transporte-desc">Carregando...</p>
+                    <p class="beneficio-valor" id="vale-transporte-valor">Valor mensal: R$ 0,00</p>
+                </div>
+
+                <div class="beneficio-item">
+                    <div class="beneficio-header">
+                        <i class="fas fa-utensils" style="color: #28a745;"></i>
+                        <h4>Vale Refeição</h4>
+                    </div>
+                    <p class="beneficio-desc" id="vale-refeicao-desc">Carregando...</p>
+                    <p class="beneficio-valor" id="vale-refeicao-valor">Valor mensal: R$ 0,00</p>
+                </div>
+
+                <div class="beneficio-item">
+                    <div class="beneficio-header">
+                        <i class="fas fa-graduation-cap" style="color: #6f42c1;"></i>
+                        <h4>Bolsa Educação</h4>
+                    </div>
+                    <p class="beneficio-desc" id="bolsa-educacao-desc">Carregando...</p>
+                    <p class="beneficio-valor" id="bolsa-educacao-valor">Até R$ 0,00/mês</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contato RH -->
+        <section class="beneficio-card" style="background-color: var(--navy-blue-light); color: white;">
+            <div class="contact-section">
+                <div>
+                    <h3><i class="fas fa-headset"></i> Dúvidas sobre sua conta?</h3>
+                    <p>Entre em contato com o Departamento Pessoal</p>
+                </div>
+                <div class="contact-buttons">
+                    <button class="btn-primary">
+                        <i class="fas fa-envelope"></i> E-mail
+                    </button>
+                    <button class="btn-success">
+                        <i class="fas fa-phone-alt"></i> Telefone
+                    </button>
+                    <button class="btn-secondary">
+                        <i class="fas fa-calendar-alt"></i> Agendar Horário
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            checkUserRole(['funcionario']);
+            
+            // Carregar dados da contabilidade
+            await carregarDadosContabilidade();
+        });
+
+        async function carregarDadosContabilidade() {
+            try {
+                const response = await fetch('/api/minha-contabilidade', {
+                    method: 'GET',
+                    headers: getAuthHeaders()
+                });
+
+                if (response.ok) {
+                    const dados = await response.json();
+                    preencherDados(dados);
+                } else {
+                    showMessage('Erro ao carregar dados de contabilidade', 'danger');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                showMessage('Erro de conexão', 'danger');
+            }
+        }
+
+        function preencherDados(dados) {
+            // Informações básicas
+            document.getElementById('employee-name').textContent = dados.nome || 'Nome não informado';
+            document.getElementById('employee-position').textContent = `Cargo: ${dados.cargo || 'Não informado'}`;
+            document.getElementById('employee-id').textContent = `ID: ${dados.matricula || 'Não informada'}`;
+            document.getElementById('admission-date').textContent = dados.data_admissao ? new Date(dados.data_admissao).toLocaleDateString('pt-BR') : '--/--/----';
+            document.getElementById('contract-type').textContent = dados.tipo_contrato || 'Não informado';
+            document.getElementById('base-salary').textContent = dados.salario_base ? `R$ ${dados.salario_base.toFixed(2)}` : 'R$ 0,00';
+            document.getElementById('bank-name').textContent = dados.banco || 'Não informado';
+
+            // Salário e benefícios
+            const ultimoPagamento = dados.historico_pagamentos && dados.historico_pagamentos.length > 0 
+                ? dados.historico_pagamentos[dados.historico_pagamentos.length - 1] 
+                : null;
+
+            if (ultimoPagamento) {
+                document.getElementById('salario-liquido').textContent = `R$ ${ultimoPagamento.salario_liquido.toFixed(2)}`;
+                document.getElementById('total-abonos').textContent = `R$ ${ultimoPagamento.abonos.toFixed(2)}`;
+                document.getElementById('total-descontos').textContent = `R$ ${ultimoPagamento.descontos.toFixed(2)}`;
+                
+                const percentual = dados.salario_base ? (ultimoPagamento.salario_liquido / dados.salario_base) * 100 : 0;
+                document.getElementById('progress-salario').style.width = `${percentual}%`;
+                document.getElementById('percentual-salario').textContent = `${percentual.toFixed(0)}% do salário bruto`;
+            }
+
+            // Benefícios
+            document.getElementById('plano-saude-desc').textContent = dados.plano_saude_desc || 'Plano de Saúde';
+            document.getElementById('plano-saude-valor').textContent = `Valor mensal: R$ ${(dados.plano_saude || 0).toFixed(2)}`;
+            
+            document.getElementById('vale-transporte-desc').textContent = dados.vale_transporte_desc || 'Vale Transporte';
+            document.getElementById('vale-transporte-valor').textContent = `Valor mensal: R$ ${(dados.vale_transporte || 0).toFixed(2)}`;
+            
+            document.getElementById('vale-refeicao-desc').textContent = dados.vale_refeicao_desc || 'Vale Refeição';
+            document.getElementById('vale-refeicao-valor').textContent = `Valor mensal: R$ ${(dados.vale_refeicao || 0).toFixed(2)}`;
+            
+            document.getElementById('bolsa-educacao-desc').textContent = dados.bolsa_educacao_desc || 'Bolsa Educação';
+            document.getElementById('bolsa-educacao-valor').textContent = `Até R$ ${(dados.bolsa_educacao || 0).toFixed(2)}/mês`;
+
+            // Preencher tabela de holerites
+            preencherTabelaHolerites(dados.historico_pagamentos || []);
+        }
+
+        function preencherTabelaHolerites(historico) {
+            const tbody = document.getElementById('tabela-holerites');
+            tbody.innerHTML = '';
+
+            if (historico.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7">Nenhum holerite disponível</td></tr>';
+                return;
+            }
+
+            historico.forEach(pagamento => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${pagamento.mes_ano}</td>
+                    <td>R$ ${pagamento.salario_bruto.toFixed(2)}</td>
+                    <td class="positivo">R$ ${pagamento.abonos.toFixed(2)}</td>
+                    <td class="negativo">R$ ${pagamento.descontos.toFixed(2)}</td>
+                    <td><strong>R$ ${pagamento.salario_liquido.toFixed(2)}</strong></td>
+                    <td><span class="status-badge ${pagamento.status.toLowerCase()}">${pagamento.status}</span></td>
+                    <td>
+                        <button class="btn-icon" title="Visualizar holerite">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+    </script>
+</body>
+</html>
