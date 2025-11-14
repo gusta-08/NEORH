@@ -201,11 +201,20 @@ def create_tables():
             db.session.add(dados_gerente) # Adiciona ao banco
             db.session.commit() # Salva as mudanças
 
+
 # Configurações de upload de arquivos (atestados)
 ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg'}
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS # Verifica extensões permitidas
+
+# Garante que as tabelas existam quando o módulo for importado (ex: gunicorn)
+try:
+    create_tables()
+except Exception:
+    # Em alguns ambientes (build, ou se DB não estiver disponível) falhar aqui é aceitável;
+    # o container/serviço deverá logar o erro e tentar novamente quando o DB estiver pronto.
+    pass
 
 
 # ROTAS DE AUTENTICAÇÃO
