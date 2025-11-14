@@ -189,6 +189,7 @@ def token_required(f):
 # CRIA AS TABELAS NO BANCO DE DADOS
 def create_tables():
     with app.app_context():
+        app.logger.info('create_tables: starting db.create_all()')
         db.create_all()
         # Adiciona o usuário gerente padrão se não existir
         if not Usuario.query.filter_by(email='gerente@empresa.com').first():
@@ -200,6 +201,7 @@ def create_tables():
             dados_gerente = DadosUsuario(user_id=gerente.id) # Cria os dados adicionais
             db.session.add(dados_gerente) # Adiciona ao banco
             db.session.commit() # Salva as mudanças
+            app.logger.info('create_tables: default manager created')
 
 
 # Configurações de upload de arquivos (atestados)
@@ -210,10 +212,12 @@ def allowed_file(filename):
 
 # Garante que as tabelas existam quando o módulo for importado (ex: gunicorn)
 try:
+    app.logger.info('create_tables: import-time call attempting')
     create_tables()
 except Exception:
     # Em alguns ambientes (build, ou se DB não estiver disponível) falhar aqui é aceitável;
     # o container/serviço deverá logar o erro e tentar novamente quando o DB estiver pronto.
+    app.logger.exception('create_tables: import-time call failed')
     pass
 
 
