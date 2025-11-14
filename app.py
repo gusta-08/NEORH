@@ -65,9 +65,6 @@ app.config['UPLOAD_FOLDER'] = os.environ.get('UPLOAD_FOLDER', os.path.join(app.r
 app.config['UPLOAD_FOLDER_PERFIL'] = os.environ.get('UPLOAD_FOLDER_PERFIL', os.path.join(app.root_path, 'static', 'uploads', 'perfil'))
 
 db = SQLAlchemy(app) # Inicializa o SQLAlchemy com a aplicação Flask
-# Migrations (Flask-Migrate)
-from flask_migrate import Migrate
-migrate = Migrate(app, db)
 
 BRASILIA_TZ = pytz.timezone('America/Sao_Paulo')
 
