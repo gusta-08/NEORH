@@ -21,3 +21,4 @@ build/
 
 # Database
 *.db
+static/uploads/
