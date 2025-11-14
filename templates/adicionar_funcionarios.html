@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <!-- Define o conjunto de caracteres para suportar acentos e caracteres especiais -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Torna a página responsiva em dispositivos móveis -->
+    <title>Adicionar Funcionário - Sistema de RH</title>
+    <!-- Importa o arquivo CSS principal do sistema -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Define o favicon com um número aleatório para evitar cache -->
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}?v={{ range(1, 1000) | random }}" type="image/x-icon">
+    <!-- Importa o arquivo JavaScript externo -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</head>
+<body>
+    <!-- Cabeçalho e barra de navegação -->
+    <header>
+        <nav>
+            <h1>Adicionar Funcionários</h1>
+            <ul class="nav-links"> <li><a href="/dashboard-page">Home</a></li>
+                <li>
+                    <img src="/static/images/logo TCC branca.png" alt="Logo da Empresa" class="header-logo">
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Conteúdo principal da página -->
+    <main class="container">
+        <h2>Cadastrar Novo Funcionário</h2>
+        <!-- Área para exibição de mensagens (sucesso ou erro) -->
+        <div id="message-area" class="alert" style="display: none;"></div>
+
+        <!-- Formulário para cadastro de funcionário -->
+        <form id="add-employee-form"> <!-- Formulário com ID para manipulação via JavaScript -->
+            <div class="form-group">
+                <label for="nome">Nome:</label>
+                <input type="text" id="nome" name="nome" required> <!-- Campo obrigatório -->
+            </div>
+            <div class="form-group"> <!-- Grupo de formulário para e-mail -->
+                <label for="email">E-mail:</label>
+                <input type="email" id="email" name="email" required>  <!-- Campo obrigatório -->
+            </div>
+            <div class="form-group"> <!-- Grupo de formulário para senha -->
+                <label for="senha">Senha:</label>
+                <input type="password" id="senha" name="senha" required>  <!-- Campo obrigatório -->
+            </div>
+            <div class="form-group"> <!-- Grupo de formulário para telefone -->
+                <label for="telefone">Telefone:</label>
+                <input type="text" id="telefone" name="telefone"> <!-- Campo opcional -->
+            </div>
+            <div class="form-group"> <!-- Grupo de formulário para foto de perfil -->
+                <label for="foto_perfil">Foto de Perfil:</label>
+                <input type="file" id="foto_perfil" name="foto_perfil" accept="image/*"> <!-- Campo opcional -->
+            </div> 
+            <!-- Botão que envia os dados do formulário -->
+            <button type="submit">Cadastrar Funcionário</button>
+        </form>
+    </main> 
+
+    <script>
+        // Executa quando o DOM for carregado
+        document.addEventListener('DOMContentLoaded', () => {
+            // Verifica se o usuário possui o papel de 'gerente' antes de permitir o acesso
+            checkUserRole(['gerente']);
+
+            const form = document.getElementById('add-employee-form'); // Seleciona o formulário pelo ID
+            if (form) {
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault(); // Impede o comportamento padrão do formulário
+
+                    // Coleta os dados do formulário
+                    const formData = new FormData(); // Usa FormData para suportar upload de arquivos
+                    formData.append('nome', document.getElementById('nome').value);
+                    formData.append('email', document.getElementById('email').value);
+                    formData.append('senha', document.getElementById('senha').value); 
+                    formData.append('telefone', document.getElementById('telefone').value); 
+
+                    // Adiciona a foto de perfil, se houver
+                    const fotoInput = document.getElementById('foto_perfil'); // Seleciona o input de arquivo
+                    if (fotoInput && fotoInput.files.length > 0) {
+                        formData.append('foto_perfil', fotoInput.files[0]) ; // Adiciona o arquivo ao FormData
+                    }
+
+                    // Recupera o token JWT do armazenamento local
+                    const token = localStorage.getItem('jwt_token');
+                    try {
+                        // Envia os dados via requisição POST para o servidor
+                        const response = await fetch('/cadastrar-funcionario', {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}` // Adiciona o token no cabeçalho
+                            },
+                            body: formData // Usa FormData como corpo da requisição
+                        }); 
+
+                        const result = await response.json(); // Converte a resposta para JSON
+                        const messageArea = document.getElementById('message-area'); // Seleciona a área de mensagens
+                        if (response.ok) {
+                            // Exibe mensagem de sucesso
+                            messageArea.style.display = 'block';
+                            messageArea.className = 'alert success';
+                            messageArea.textContent = result.message || 'Funcionário cadastrado com sucesso!';
+                            form.reset(); // Reseta o formulário após o cadastro
+                        } else {
+                            // Exibe mensagem de erro
+                            messageArea.style.display = 'block';
+                            messageArea.className = 'alert error';
+                            messageArea.textContent = result.error || 'Erro ao cadastrar funcionário.';
+                        } 
+                    } catch (error) {
+                        console.error('Erro na requisição:', error);
+                    }
+                });
+            }
+        });
+    </script> 
+</body>
+</html>

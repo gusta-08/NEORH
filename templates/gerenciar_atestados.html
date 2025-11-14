@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Atestados - Sistema de RH</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}?v={{ range(1, 1000) | random }}" type="image/x-icon">
+</head>
+<body>
+    <header>
+        <nav>
+            <h1>Gerenciar Atestados</h1>
+            <ul>
+                <li><a href="/dashboard-page">Home</a></li>
+                <li><a href="#" id="logout-button">Sair</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container">
+        <h2>Atestados Pendentes e Histórico</h2>
+        <div id="message-area" class="alert" style="display: none;"></div>
+
+        <table id="atestados-management-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Funcionário</th>
+                    <th>Motivo</th>
+                    <th>Arquivo</th>
+                    <th>Data de Envio</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Atestados serão carregados aqui via JS -->
+            </tbody>
+        </table>
+    </main>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            checkUserRole(['gerente']); // Apenas gerentes podem gerenciar atestados
+
+            document.getElementById('logout-button').addEventListener('click', () => {
+                redirectToLogin();
+            });
+
+            const atestadosTableBody = document.querySelector('#atestados-management-table tbody');
+
+            async function loadAtestados() {
+                atestadosTableBody.innerHTML = '<tr><td colspan="7">Carregando atestados...</td></tr>';
+                try {
+                    const response = await fetch('/api/atestados', {
+                        method: 'GET',
+                        headers: getAuthHeaders()
+                    });
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        atestadosTableBody.innerHTML = ''; // Limpa a tabela
+                        if (data.length > 0) {
+                            data.forEach(atestado => {
+                                const row = atestadosTableBody.insertRow();
+                                row.insertCell().textContent = atestado.id;
+                                row.insertCell().textContent = atestado.funcionario;
+                                row.insertCell().textContent = atestado.motivo;
+                                
+                                const fileCell = row.insertCell();
+                                const fileLink = document.createElement('a');
+                                fileLink.href = `/static/uploads/${atestado.arquivo}`;
+                                fileLink.textContent = atestado.arquivo;
+                                fileLink.target = '_blank';
+                                fileCell.appendChild(fileLink);
+
+                                row.insertCell().textContent = new Date(atestado.criado_em).toLocaleString();
+                                row.insertCell().textContent = atestado.status;
+
+                                const actionsCell = row.insertCell();
+                                if (atestado.status === 'pendente') {
+                                    const approveButton = document.createElement('button');
+                                    approveButton.textContent = 'Aprovar';
+                                    approveButton.className = 'action-button approve-button';
+                                    approveButton.addEventListener('click', () => updateAtestadoStatus(atestado.id, 'aprovado'));
+                                    actionsCell.appendChild(approveButton);
+
+                                    const rejectButton = document.createElement('button');
+                                    rejectButton.textContent = 'Rejeitar';
+                                    rejectButton.className = 'action-button reject-button';
+                                    rejectButton.addEventListener('click', () => updateAtestadoStatus(atestado.id, 'rejeitado'));
+                                    actionsCell.appendChild(rejectButton);
+                                } else {
+                                    actionsCell.textContent = 'Ação concluída';
+                                }
+                            });
+                        } else {
+                            atestadosTableBody.innerHTML = '<tr><td colspan="7">Nenhum atestado para gerenciar.</td></tr>';
+                        }
+                    } else {
+                        showMessage(data.message || 'Erro ao carregar atestados.', 'danger');
+                        atestadosTableBody.innerHTML = `<tr><td colspan="7">${data.message || 'Erro.'}</td></tr>`;
+                    }
+                } catch (error) {
+                    console.error('Erro ao carregar atestados:', error);
+                    showMessage('Erro de conexão ao carregar atestados.', 'danger');
+                    atestadosTableBody.innerHTML = `<tr><td colspan="7">Erro de conexão.</td></tr>`;
+                }
+            }
+
+            async function updateAtestadoStatus(atestadoId, status) {
+                try {
+                    const response = await fetch(`/api/atestados/${atestadoId}/${status}`, {
+                        method: 'PUT',
+                        headers: getAuthHeaders()
+                    });
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        showMessage(data.message, 'success');
+                        loadAtestados(); // Recarrega a lista
+                    } else {
+                        showMessage(data.message || `Erro ao ${status} atestado.`, 'danger');
+                    }
+                } catch (error) {
+                    console.error(`Erro ao ${status} atestado:`, error);
+                    showMessage('Erro de conexão ao atualizar status do atestado.', 'danger');
+                }
+            }
+
+            loadAtestados(); // Carrega os atestados ao carregar a página
+        });
+    </script>
+</body>
+</html>

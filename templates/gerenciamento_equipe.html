@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <!-- Configuração de idioma e codificação -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Título da página -->
+    <title>Gerenciamento de Equipe - Sistema de RH</title>
+
+    <!-- Estilos e ícone do sistema -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}?v={{ range(1, 1000) | random }}" type="image/x-icon">
+</head>
+<body>
+    <!-- Cabeçalho com navegação -->
+    <header>
+        <nav>
+            <h1>Gerenciamento de Equipe</h1>
+            <ul class="nav-links"> <li><a href="/dashboard-page">Home</a></li>
+                <li>
+                    <img src="/static/images/logo TCC branca.png" alt="Logo da Empresa" class="header-logo">
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container">
+        <h2>Lista de Funcionários</h2>
+        <!-- Área para exibição de mensagens de sucesso ou erro -->
+        <div id="message-area" class="alert" style="display: none;"></div>
+
+        <!-- Filtro por função -->
+        <div class="form-group">
+            <label for="filter-funcao">Filtrar por função:</label>
+            <select id="filter-funcao">
+                <option value="">Todas</option>
+                <option value="administração">Administração</option>
+                <option value="recepção">Recepção</option>
+                <option value="faxineiro">Faxineiro</option>
+            </select>
+        </div>
+
+        <!-- Tabela que exibe os funcionários -->
+        <table id="employees-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nome</th>
+                    <th>Email</th>
+                    <th>Telefone</th>
+                    <th>Foto</th>
+                    <th>Função</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Conteúdo carregado via JavaScript -->
+            </tbody>
+        </table>
+
+        <!-- Modal para edição de funcionário -->
+        <div id="edit-employee-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <span class="close-button">&times;</span>
+                <h3>Editar Funcionário</h3>
+                <form id="edit-employee-form">
+                    <input type="hidden" id="edit-employee-id">
+                    <div class="form-group">
+                        <label for="edit-name">Nome:</label>
+                        <input type="text" id="edit-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-email">Email:</label>
+                        <input type="email" id="edit-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-password">Nova Senha (opcional):</label>
+                        <input type="password" id="edit-password">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-funcao">Função:</label>
+                        <input type="text" id="edit-funcao" placeholder="Ex: administração, recepção, faxineiro">
+                    </div>
+                    <button type="submit">Salvar Alterações</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal para visualização de pontos -->
+        <div id="view-points-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <span class="close-button">&times;</span>
+                <h3 id="points-modal-title">Histórico de Pontos de: </h3>
+                <table id="employee-points-table">
+                    <thead>
+                        <tr>
+                            <th>Entrada</th>
+                            <th>Saída</th>
+                            <th>Duração</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Pontos carregados via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+        // Recupera o token JWT armazenado para autenticação
+        function getAuthHeaders() { // Função para obter os cabeçalhos de autenticação
+            const token = localStorage.getItem('jwt_token'); // Recupera o token do armazenamento local
+            return {
+                'Authorization': `Bearer ${token}`, // Adiciona o token ao cabeçalho de autorização
+                'Content-Type': 'application/json' // Define o tipo de conteúdo como JSON
+            };
+        }
+
+        document.addEventListener('DOMContentLoaded', () => { // Quando o DOM estiver carregado
+            // Apenas o gerente tem acesso a esta página
+            checkUserRole(['gerente']);
+
+            const employeesTableBody = document.querySelector('#employees-table tbody'); // Corpo da tabela de funcionários
+            const editModal = document.getElementById('edit-employee-modal'); // Modal de edição
+            const viewPointsModal = document.getElementById('view-points-modal'); // Modal de visualização de pontos
+            const editForm = document.getElementById('edit-employee-form'); // Formulário de edição
+            const messageArea = document.getElementById('message-area'); // Área de mensagens
+            const pointsTableBody = document.querySelector('#employee-points-table tbody'); // Corpo da tabela de pontos
+            const filterFuncao = document.getElementById('filter-funcao'); // Filtro por função
+            let allEmployees = []; // Armazena todos os funcionários carregados
+
+            // Fecha modais ao clicar no botão de fechar
+            document.querySelectorAll('.close-button').forEach(button => { // Seleciona todos os botões de fechar
+                button.addEventListener('click', () => { // Adiciona evento de clique
+                    editModal.style.display = 'none';
+                    viewPointsModal.style.display = 'none'; // Fecha ambos os modais
+                });
+            });
+
+            // Fecha modais ao clicar fora deles
+            window.addEventListener('click', (event) => {
+                if (event.target == editModal) editModal.style.display = 'none';
+                if (event.target == viewPointsModal) viewPointsModal.style.display = 'none'; // Fecha ambos os modais
+            });
+
+            // Carrega os funcionários do servidor
+            async function loadEmployees() {
+                try {
+                    const response = await fetch('/api/gerente/funcionarios', { // Rota para listar funcionários
+                        method: 'GET',
+                        headers: getAuthHeaders() // Adiciona os cabeçalhos de autenticação
+                    });
+                    const data = await response.json(); // Converte a resposta para JSON
+
+                    if (response.ok) {
+                        allEmployees = data;
+                        renderEmployees(); // Renderiza os funcionários na tabela
+                    } else {
+                        showMessage(data.message || 'Erro ao carregar funcionários.', 'danger'); // Mostra mensagem de erro
+                    }
+                } catch (error) {
+                    console.error('Erro ao carregar funcionários:', error);
+                    showMessage('Erro de conexão ao carregar funcionários.', 'danger');
+                }
+            }
+
+            // Renderiza os funcionários na tabela
+            function renderEmployees() {
+                employeesTableBody.innerHTML = ''; // Limpa a tabela
+                const funcaoFiltro = filterFuncao.value; // Obtém o valor do filtro
+                let filtered = allEmployees; // Começa com todos os funcionários
+
+                // Aplica o filtro por função
+                if (funcaoFiltro) {
+                    filtered = allEmployees.filter(e => (e.funcao || '').toLowerCase() === funcaoFiltro.toLowerCase()); // Filtra por função
+                }
+
+                if (filtered.length > 0) {
+                    filtered.forEach(employee => { // Para cada funcionário filtrado
+                        const row = employeesTableBody.insertRow(); // Insere uma nova linha na tabela
+                        row.insertCell().textContent = employee.id; // ID
+                        row.insertCell().textContent = employee.nome; // Nome
+                        row.insertCell().textContent = employee.email; // Email
+                        row.insertCell().textContent = employee.telefone || 'N/A'; // Telefone
+
+                        // Foto de perfil
+                        const imgCell = row.insertCell(); // Célula para a imagem
+                        const img = document.createElement('img');
+                        img.src = employee.foto_perfil && employee.foto_perfil !== 'default-user.png' // Usa foto personalizada se existir
+                            ? `/static/uploads/perfil/${employee.foto_perfil}` // Caminho da foto personalizada
+                            : `/static/uploads/perfil/default-user.png`; // Caminho da foto padrão
+                        img.alt = 'Foto de Perfil';
+                        img.className = 'profile-pic-small'; // Classe para estilização
+                        imgCell.appendChild(img); // Adiciona a imagem à célula
+
+                        row.insertCell().textContent = employee.funcao || ''; // Função
+
+                        // Ações: Editar, Excluir, Ver Pontos
+                        const actionsCell = row.insertCell(); // Célula para ações
+                        const editButton = document.createElement('button'); // Botão de editar
+                        editButton.textContent = 'Editar'; // Texto do botão
+                        editButton.className = 'action-button edit-button'; // Classe para estilização
+                        editButton.addEventListener('click', () => openEditModal(employee)); // Abre o modal de edição
+                        actionsCell.appendChild(editButton); // Adiciona o botão à célula
+                        // Botão de excluir
+                        const deleteButton = document.createElement('button');
+                        deleteButton.textContent = 'Excluir';
+                        deleteButton.className = 'action-button delete-button';
+                        deleteButton.addEventListener('click', () => deleteEmployee(employee.id, employee.nome));
+                        actionsCell.appendChild(deleteButton); // Adiciona o botão à célula
+                        // Botão de ver pontos
+                        const viewPointsButton = document.createElement('button');
+                        viewPointsButton.textContent = 'Ver Pontos';
+                        viewPointsButton.className = 'action-button view-points-button';
+                        viewPointsButton.addEventListener('click', () => viewEmployeePoints(employee.id, employee.nome));
+                        actionsCell.appendChild(viewPointsButton); // Adiciona o botão à célula
+                    });
+                } else {
+                    const row = employeesTableBody.insertRow(); // Insere uma linha indicando que não há funcionários
+                    row.insertCell().colSpan = 7; // Abrange todas as colunas
+                    row.insertCell().textContent = 'Nenhum funcionário cadastrado.'; // Mensagem de nenhum funcionário
+                }
+            }
+
+            // Atualiza a tabela ao mudar o filtro
+            filterFuncao.addEventListener('change', renderEmployees);
+
+            // Abre o modal de edição com os dados do funcionário
+            function openEditModal(employee) {
+                document.getElementById('edit-employee-id').value = employee.id; // Preenche o ID
+                document.getElementById('edit-name').value = employee.nome; // Preenche o nome
+                document.getElementById('edit-email').value = employee.email; // Preenche o nome e email
+                document.getElementById('edit-password').value = ''; // Limpa o campo de senha
+                document.getElementById('edit-funcao').value = employee.funcao || ''; // Preenche o campo de função
+                editModal.style.display = 'block';
+            } // Abre o modal de edição
+
+            // Salva alterações do funcionário
+            editForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const id = document.getElementById('edit-employee-id').value; // Obtém o ID do funcionário
+                const name = document.getElementById('edit-name').value; // Nome
+                const email = document.getElementById('edit-email').value; // Nome e email
+                const password = document.getElementById('edit-password').value; // mudar senha (opcional)
+                const funcao = document.getElementById('edit-funcao').value; // Obtém os valores do formulário
+
+                const payload = { nome: name, email: email, funcao: funcao }; // Prepara o payload
+                if (password) payload.senha = password; // Inclui a senha se fornecida
+
+                try {
+                    const response = await fetch(`/api/funcionarios/${id}`, { // Rota para atualizar funcionário
+                        method: 'PUT', // Método PUT para atualização
+                        headers: getAuthHeaders(), // Adiciona os cabeçalhos de autenticação
+                        body: JSON.stringify(payload) // Converte o payload para JSON
+                    });
+                    const data = await response.json(); // Converte a resposta para JSON
+
+                    if (response.ok) {
+                        showMessage(data.message, 'success'); // Mostra mensagem de sucesso
+                        editModal.style.display = 'none'; // Fecha o modal
+                        loadEmployees(); // Recarrega a lista de funcionários
+                    } else {
+                        showMessage(data.message || 'Erro ao atualizar funcionário.', 'danger'); // Mostra mensagem de erro
+                    }
+                } catch (error) {
+                    console.error('Erro ao atualizar funcionário:', error);
+                    showMessage('Erro de conexão ao atualizar funcionário.', 'danger');
+                }
+            });
+
+            // Exclui funcionário
+            async function deleteEmployee(id, name) { // Confirmação antes de excluir
+                if (confirm(`Tem certeza que deseja excluir o funcionário ${name}?`)) { 
+                    try {
+                        const response = await fetch(`/api/funcionarios/${id}`, { // Rota para excluir funcionário
+                            method: 'DELETE',
+                            headers: getAuthHeaders() // Adiciona os cabeçalhos de autenticação
+                        });
+                        const data = await response.json(); // Converte a resposta para JSON
+
+                        if (response.ok) {
+                            showMessage(data.message, 'success');
+                            loadEmployees();
+                        } else {
+                            showMessage(data.message || 'Erro ao excluir funcionário.', 'danger'); // Mostra mensagem de erro
+                        }
+                    } catch (error) {
+                        console.error('Erro ao excluir funcionário:', error);
+                        showMessage('Erro de conexão ao excluir funcionário.', 'danger'); // Mensagem de erro
+                    }
+                }
+            }
+
+            // Visualiza pontos do funcionário
+            async function viewEmployeePoints(employeeId, employeeName) {
+                document.getElementById('points-modal-title').textContent = `Histórico de Pontos de: ${employeeName}`; // Atualiza o título do modal
+                pointsTableBody.innerHTML = '<tr><td colspan="3">Carregando pontos...</td></tr>'; // Mensagem de carregamento
+                viewPointsModal.style.display = 'block';
+                // Carrega os pontos do funcionário
+                try {
+                    const response = await fetch(`/api/gerente/pontos/${employeeId}`, {
+                        method: 'GET',
+                        headers: getAuthHeaders() // Adiciona os cabeçalhos de autenticação
+                    });
+                    const data = await response.json();
+                    // Verifica se a resposta foi bem-sucedida
+                    if (response.ok) {
+                        pointsTableBody.innerHTML = ''; // Limpa a tabela de pontos
+                        if (data.pontos.length > 0) {
+                            data.pontos.forEach(ponto => {
+                                const row = pointsTableBody.insertRow();
+                                row.insertCell().textContent = ponto.entrada ? new Date(ponto.entrada).toLocaleString() : 'N/A'; // Formata a data de entrada
+                                row.insertCell().textContent = ponto.saida ? new Date(ponto.saida).toLocaleString() : 'Pendente'; // Saída pode estar pendente
+
+                                // Calcula a duração do expediente
+                                let duracao = 'N/A';
+                                if (ponto.entrada && ponto.saida) { // Só calcula se ambos os horários existirem
+                                    // Calcula a diferença entre entrada e saída
+                                    const entrada = new Date(ponto.entrada);
+                                    const saida = new Date(ponto.saida);
+                                    const diffMs = saida - entrada;
+                                    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+                                    const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                                    duracao = `${diffHours}h ${diffMinutes}m`; 
+                                } // Formata a duração
+                                row.insertCell().textContent = duracao;
+                            });
+                        } else {
+                            const row = pointsTableBody.insertRow(); // Insere uma linha indicando que não há pontos
+                            row.insertCell().colSpan = 3;
+                            row.insertCell().textContent = 'Nenhum ponto registrado para este funcionário.'; // Mensagem de nenhum ponto
+                        } // Se não houver pontos
+                    } else {
+                        showMessage(data.message || 'Erro ao carregar pontos do funcionário.', 'danger'); // Mensagem de erro
+                    }
+                } catch (error) {
+                    console.error('Erro ao carregar pontos do funcionário:', error); // Log do erro
+                    showMessage('Erro de conexão ao carregar pontos.', 'danger'); // Mensagem de erro
+                }
+            }
+
+            // Inicializa o carregamento da tabela
+            loadEmployees();
+        });
+    </script>
+</body>
+</html>

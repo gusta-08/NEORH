@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal do Funcionário - Contabilidade</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+    <style>
+        /* Estilos para a página de contabilidade */
+        .hover-scale {
+            transition: transform 0.3s ease;
+        }
+        .hover-scale:hover {
+            transform: scale(1.02);
+        }
+        .progress-bar {
+            height: 8px;
+            border-radius: 4px;
+            background-color: #e0e0e0;
+        }
+        .progress-value {
+            height: 100%;
+            border-radius: 4px;
+            background-color: #4CAF50;
+        }
+        .beneficio-card {
+            border: 1px solid var(--medium-gray);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background: var(--white);
+        }
+        .beneficio-card:hover {
+            border-color: var(--navy-blue-light);
+            box-shadow: var(--shadow);
+        }
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .status-badge.pago {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status-badge.pendente {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .status-badge.atrasado {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        /* Layout melhorado */
+        .header-content {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .beneficios-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+        
+        .beneficio-item {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+        }
+        
+        .beneficio-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .valores-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .valor-item {
+            text-align: center;
+            padding: 0.5rem;
+            border-radius: 4px;
+        }
+        
+        .valor-item.positivo {
+            background-color: #e8f5e9;
+        }
+        
+        .valor-item.negativo {
+            background-color: #ffebee;
+        }
+        
+        /* Estilos para o modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        
+        .modal-content {
+            background-color: #fefefe;
+            margin: 2% auto;
+            padding: 0;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .modal-body {
+            padding: 1rem;
+        }
+        
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+            padding: 1rem;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close:hover {
+            color: #000;
+        }
+        
+        /* Estilos para a tabela responsiva */
+        .table-responsive {
+            overflow-x: auto;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .data-table th,
+        .data-table td {
+            padding: 0.75rem;
+            text-align: left;
+        }
+        
+        .data-table th {
+            font-weight: 600;
+        }
+        
+        /* Estilos para o holerite detalhado */
+        .holerite-detalhado {
+            max-width: 800px;
+            margin: 0 auto;
+            font-family: Arial, sans-serif;
+        }
+        
+        .holerite-header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+        }
+        
+        .holerite-dados {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .holerite-tabela {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 12px;
+        }
+        
+        .holerite-tabela th,
+        .holerite-tabela td {
+            border: 1px solid #000;
+            padding: 8px;
+        }
+        
+        .holerite-tabela th {
+            background-color: #f0f0f0;
+        }
+        
+        .holerite-informacoes {
+            margin-top: 20px;
+            font-size: 12px;
+        }
+        
+        .holerite-observacoes {
+            margin-top: 15px;
+            font-size: 11px;
+            color: #000000;
+        }
+        
+        .holerite-assinatura {
+            margin-top: 40px;
+            text-align: center;
+        }
+        
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .header-actions {
+                width: 100%;
+                justify-content: flex-start;
+            }
+            
+            .modal-content {
+                width: 95%;
+                margin: 5% auto;
+            }
+            
+            .holerite-dados {
+                grid-template-columns: 1fr;
+            }
+            
+            .grid-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .beneficios-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <h1>Portal do Funcionário - Contabilidade</h1>
+            <ul class="nav-links">
+                <li><a href="/dashboard-page">Home</a></li>
+                <li>
+                    <img src="/static/images/logo TCC branca.png" alt="Logo da Empresa" class="header-logo">
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container">
+        <div id="message-area" class="alert" style="display: none;"></div>
+
+        <!-- Informações do Funcionário -->
+        <section class="beneficio-card">
+            <div class="header-content">
+                <div class="user-info">
+                    <h2 id="employee-name">Carregando...</h2>
+                    <p id="employee-position">Cargo: Carregando...</p>
+                    <p id="employee-id">ID: Carregando...</p>
+                </div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <p class="info-label">Admissão</p>
+                        <p class="info-value" id="admission-date">--/--/----</p>
+                    </div>
+                    <div class="info-item">
+                        <p class="info-label">Tipo Contrato</p>
+                        <p class="info-value" id="contract-type">---</p>
+                    </div>
+                    <div class="info-item">
+                        <p class="info-label">Salário Base</p>
+                        <p class="info-value" id="base-salary">R$ --.--</p>
+                    </div>
+                    <div class="info-item">
+                        <p class="info-label">Banco</p>
+                        <p class="info-value" id="bank-name">---</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dashboard de Informações -->
+        <div class="grid-container">
+            <!-- Salário e Benefícios -->
+            <div class="beneficio-card hover-scale">
+                <h3><i class="fas fa-money-bill-wave"></i> Salário e Benefícios</h3>
+                <div class="salario-info">
+                    <p class="info-label">Salário Líquido (último mês)</p>
+                    <p class="valor-destaque" id="salario-liquido">R$ 0,00</p>
+                    <div class="progress-bar">
+                        <div class="progress-value" id="progress-salario" style="width: 0%"></div>
+                    </div>
+                    <p class="info-small" id="percentual-salario">0% do salário bruto</p>
+                    
+                    <div class="valores-grid">
+                        <div class="valor-item positivo">
+                            <p class="info-label">Abonos</p>
+                            <p class="valor" id="total-abonos">R$ 0,00</p>
+                        </div>
+                        <div class="valor-item negativo">
+                            <p class="info-label">Descontos</p>
+                            <p class="valor" id="total-descontos">R$ 0,00</p>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+        <!-- Detalhamento Financeiro -->
+        <section class="beneficio-card">
+            <div class="section-header">
+                <h3><i class="fas fa-file-invoice"></i> Detalhamento Financeiro</h3>
+                <div class="header-actions">
+                    <select class="form-select" id="mes-select" onchange="filtrarPorMes()">
+                        <option value="">Selecionar Mês</option>
+                        <!-- Opções serão preenchidas via JavaScript -->
+                    </select>
+                    <select class="form-select" id="periodo-select" onchange="filtrarPorPeriodo()">
+                        <option value="3">Últimos 3 meses</option>
+                        <option value="6">Últimos 6 meses</option>
+                        <option value="12">Últimos 12 meses</option>
+                        <option value="0">Todos os períodos</option>
+                    </select>
+                    <button class="btn-secondary" onclick="exportarParaPDF()">
+                        <i class="fas fa-file-pdf"></i> Exportar PDF
+                    </button>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Mês/Ano</th>
+                            <th>Salário Bruto</th>
+                            <th>Abonos</th>
+                            <th>Descontos</th>
+                            <th>Salário Líquido</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-holerites">
+                        <tr>
+                            <td colspan="7">Carregando dados...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Benefícios Adicionais -->
+        <section class="beneficio-card">
+            <h3><i class="fas fa-gift"></i> Benefícios Adicionais</h3>
+            <div class="beneficios-grid" id="beneficios-container">
+                <div class="beneficio-item">
+                    <div class="beneficio-header">
+                        <i class="fas fa-heart" style="color: #dc3545;"></i>
+                        <h4>Plano de Saúde</h4>
+                    </div>
+                    <p class="beneficio-desc" id="plano-saude-desc"></p>
+                    <p class="beneficio-valor" id="plano-saude-valor">Valor mensal: R$ 0,00</p>
+                </div>
+
+                <div class="beneficio-item">
+                    <div class="beneficio-header">
+                        <i class="fas fa-car" style="color: #900000;"></i>
+                        <h4>Vale Transporte</h4>
+                    </div>
+                    <p class="beneficio-desc" id="vale-transporte-desc"></p>
+                    <p class="beneficio-valor" id="vale-transporte-valor">Valor mensal: R$ 0,00</p>
+                </div>
+
+                <div class="beneficio-item">
+                    <div class="beneficio-header">
+                        <i class="fas fa-utensils" style="color: #28a745;"></i>
+                        <h4>Vale Refeição</h4>
+                    </div>
+                    <p class="beneficio-desc" id="vale-refeicao-desc"></p>
+                    <p class="beneficio-valor" id="vale-refeicao-valor">Valor mensal: R$ 0,00</p>
+                </div>
+
+                <div class="beneficio-item">
+                    <div class="beneficio-header">
+                        <i class="fas fa-graduation-cap" style="color: #ffc107;"></i>
+                        <h4>Bolsa Educação</h4>
+                    </div>
+                    <p class="beneficio-desc" id="bolsa-educacao-desc"></p>
+                    <p class="beneficio-valor" id="bolsa-educacao-valor">Valor mensal: R$ 0,00</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal para Visualização Detalhada do Holerite -->
+    <div id="holerite-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-titulo">Holerite - Mês/Ano</h3>
+                <span class="close" onclick="fecharModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="modal-conteudo">
+                <!-- Conteúdo será preenchido via JavaScript -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="imprimirHolerite()">
+                    <i class="fas fa-print"></i> Imprimir
+                </button>
+                <button class="btn-primary" onclick="exportarHoleritePDF()">
+                    <i class="fas fa-download"></i> Baixar PDF
+                </button>
+                <button class="btn-info" onclick="fecharModal()">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script>
+        // Variável global para armazenar dados atuais
+            let dadosContabilidadeAtuais = null;
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        checkUserRole(['funcionario', 'gerente']);
+        carregarDadosFuncionario(); // Primeiro carrega dados básicos do funcionário
+        carregarDadosContabilidade(); // Depois carrega dados de contabilidade
+    });
+
+    // Carregar dados básicos do funcionário
+    async function carregarDadosFuncionario() {
+        try {
+            const response = await fetch('/api/meus-dados', {
+                method: 'GET',
+                headers: getAuthHeaders()
+            });
+            
+            if (response.ok) {
+                const dados = await response.json();
+                atualizarDadosFuncionario(dados);
+            } else {
+                console.error('Erro ao carregar dados do funcionário'); // Apenas loga o erro, não mostra mensagem
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+        }
+    }
+
+    // Atualizar dados básicos do funcionário na interface
+    function atualizarDadosFuncionario(dados) {
+        // Informações básicas do funcionário
+        document.getElementById('employee-name').textContent = dados.nome || 'Nome não informado';
+        document.getElementById('employee-position').textContent = `Cargo: ${dados.funcao || 'Não informado'}`;
+        document.getElementById('employee-id').textContent = `ID: ${dados.id || 'Não informado'}`;
+        
+        // Se os dados de contabilidade também estiverem aqui, atualize
+        if (dados.data_admissao) {
+            document.getElementById('admission-date').textContent = dados.data_admissao;
+        }
+        if (dados.tipo_contrato) {
+            document.getElementById('contract-type').textContent = dados.tipo_contrato;
+        }
+        if (dados.salario_base) {
+            document.getElementById('base-salary').textContent = formatarMoeda(dados.salario_base);
+        }
+        if (dados.banco) {
+            document.getElementById('bank-name').textContent = dados.banco;
+        }
+    }
+
+    // Função para carregar os dados de contabilidade do funcionário
+    async function carregarDadosContabilidade() {
+        try {
+            const response = await fetch('/api/minha-contabilidade', {
+                method: 'GET',
+                headers: getAuthHeaders()
+            });
+            
+            if (response.ok) {
+                const dados = await response.json();
+                atualizarInterface(dados);
+            } else {
+                showMessage('Erro ao carregar dados de contabilidade', 'error');
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+            showMessage('Erro de conexão', 'error');
+        }
+    }
+    // Atualizar a interface com os dados de contabilidade
+    function atualizarInterface(dados) {
+        dadosContabilidadeAtuais = dados;
+        
+        // Se os dados básicos ainda não foram preenchidos, preencha agora
+        if (!document.getElementById('employee-name').textContent || 
+            document.getElementById('employee-name').textContent === 'Carregando...') {
+            
+            document.getElementById('employee-name').textContent = dados.nome || 'Nome não informado';
+            document.getElementById('employee-position').textContent = `Cargo: ${dados.funcao || 'Não informado'}`;
+            document.getElementById('employee-id').textContent = `ID: ${dados.id || 'Não informado'}`;
+        }
+
+        // Informações de contabilidade
+        document.getElementById('admission-date').textContent = dados.data_admissao || '--/--/----';
+        document.getElementById('contract-type').textContent = dados.tipo_contrato || '---';
+        document.getElementById('base-salary').textContent = formatarMoeda(dados.salario_base || 0);
+        document.getElementById('bank-name').textContent = dados.banco || '---';
+
+        // Benefícios
+        document.getElementById('plano-saude-valor').textContent = `Valor mensal: ${formatarMoeda(dados.plano_saude || 0)}`;
+        document.getElementById('vale-transporte-valor').textContent = `Valor mensal: ${formatarMoeda(dados.vale_transporte || 0)}`;
+        document.getElementById('vale-refeicao-valor').textContent = `Valor mensal: ${formatarMoeda(dados.vale_refeicao || 0)}`;
+        document.getElementById('bolsa-educacao-valor').textContent = `Valor mensal: ${formatarMoeda(dados.bolsa_educacao || 0)}`;
+
+        // Histórico de pagamentos
+        atualizarTabelaHolerites(dados.historico_pagamentos || []);
+        atualizarSeletorMeses(dados.historico_pagamentos || []);
+        
+        // Calcular totais
+        calcularTotais(dados.historico_pagamentos || []);
+    }
+
+    async function carregarDadosFuncionario() {  // Carrega dados básicos do funcionário
+    try {
+        const response = await fetch('/api/minha-contabilidade', {
+            method: 'GET',
+            headers: getAuthHeaders()
+        });
+        
+        if (response.ok) {
+            const dados = await response.json();
+            atualizarDadosFuncionario(dados);
+        }
+    } catch (error) {
+        console.error('Erro ao carregar dados do funcionário:', error);
+    }
+} 
+        function atualizarTabelaHolerites(historico) { // Atualiza a tabela de holerites com os dados do histórico
+            const tbody = document.getElementById('tabela-holerites');
+            
+            if (!historico || historico.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7">Nenhum pagamento registrado</td></tr>';
+                return;
+            }
+
+            // Ordenar por data (mais recente primeiro)
+            historico.sort((a, b) => new Date(b.mes_ano + '-01') - new Date(a.mes_ano + '-01'));
+            // Preencher a tabela
+            tbody.innerHTML = historico.map(pagamento => {
+                const mesAno = pagamento.mes_ano || ''; // Garantir que mes_ano não seja undefined
+                const salarioBruto = Number(pagamento.salario_bruto) || 0; // Garantir que seja número
+                const abonos = Number(pagamento.abonos) || 0; // Garantir que seja número
+                const descontos = Number(pagamento.descontos) || 0; // Garantir que seja número
+                const salarioLiquido = Number(pagamento.salario_liquido) || (salarioBruto + abonos - descontos); // Garantir que seja número
+                const status = pagamento.status || 'Pago'; // Garantir que status não seja undefined
+                // Classe para o status
+                let statusClass = 'status-badge ';
+                if (status === 'Pago') statusClass += 'pago';
+                else if (status === 'Pendente') statusClass += 'pendente';
+                else statusClass += 'atrasado';
+                // Retornar a linha da tabela
+                return `
+                    <tr>
+                        <td>${formatarMesAno(mesAno)}</td>
+                        <td>${formatarMoeda(salarioBruto)}</td>
+                        <td style="color: green;">+${formatarMoeda(abonos)}</td>
+                        <td style="color: red;">-${formatarMoeda(descontos)}</td>
+                        <td><strong>${formatarMoeda(salarioLiquido)}</strong></td>
+                        <td><span class="${statusClass}">${status}</span></td>
+                        <td>
+                            <button class="btn-small" onclick="visualizarHolerite('${mesAno}')">
+                                <i class="fas fa-eye"></i> Visualizar
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join(''); // Junta todas as linhas em uma única string
+        }
+        // Calcular totais e atualizar indicadores
+        function calcularTotais(historico) {
+            if (!historico || historico.length === 0) {
+                document.getElementById('salario-liquido').textContent = 'R$ 0,00';
+                document.getElementById('total-abonos').textContent = 'R$ 0,00';
+                document.getElementById('total-descontos').textContent = 'R$ 0,00';
+                document.getElementById('progress-salario').style.width = '0%';
+                document.getElementById('percentual-salario').textContent = '0% do salário bruto';
+                return;
+            }
+
+            // Último pagamento
+            const ultimoPagamento = historico[0]; // Assumindo que o mais recente está no início
+            const salarioBruto = Number(ultimoPagamento.salario_bruto) || 0;
+            const abonos = Number(ultimoPagamento.abonos) || 0;
+            const descontos = Number(ultimoPagamento.descontos) || 0;
+            const salarioLiquido = Number(ultimoPagamento.salario_liquido) || (salarioBruto + abonos - descontos);
+            // Atualizar indicadores
+            document.getElementById('salario-liquido').textContent = formatarMoeda(salarioLiquido);
+            document.getElementById('total-abonos').textContent = formatarMoeda(abonos);
+            document.getElementById('total-descontos').textContent = formatarMoeda(descontos);
+
+            // Calcular percentual
+            const percentual = salarioBruto > 0 ? (salarioLiquido / salarioBruto) * 100 : 0;
+            document.getElementById('progress-salario').style.width = `${Math.min(percentual, 100)}%`;
+            document.getElementById('percentual-salario').textContent = `${percentual.toFixed(1)}% do salário bruto`;
+        }
+        // Formatar valor monetário
+        function formatarMoeda(valor) {
+            return new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            }).format(valor);
+        }
+        // Formatar mês/ano
+        function formatarMesAno(mesAno) {
+            if (!mesAno) return '--/----';
+            const [ano, mes] = mesAno.split('-');
+            return `${mes}/${ano}`;
+        }
+        // Atualizar seletor de meses com base no histórico
+        function atualizarSeletorMeses(historico) {
+            const selectMes = document.getElementById('mes-select');
+            selectMes.innerHTML = '<option value="">Selecionar Mês</option>';
+            // Extrair meses únicos do histórico
+            if (!historico || historico.length === 0) return;
+            
+            // Extrair meses únicos e ordenar (mais recente primeiro)
+            const mesesUnicos = [...new Set(historico.map(h => h.mes_ano))].sort((a, b) => {
+                return new Date(b + '-01') - new Date(a + '-01');
+            });
+            // Adicionar opções ao seletor
+            mesesUnicos.forEach(mesAno => {
+                const option = document.createElement('option');
+                option.value = mesAno;
+                option.textContent = formatarMesAnoExtenso(mesAno);
+                selectMes.appendChild(option);
+            });
+        }
+        // Formatar mês/ano para exibição extensa
+        function formatarMesAnoExtenso(mesAno) {
+            if (!mesAno) return '';
+            const [ano, mes] = mesAno.split('-');
+            const meses = [
+                'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+            ];
+            return `${meses[parseInt(mes) - 1]} de ${ano}`;
+        }
+        // Filtrar histórico por mês ou período
+        function filtrarPorMes() {
+            const mesSelecionado = document.getElementById('mes-select').value;
+            
+            if (!mesSelecionado) {
+                // Se nenhum mês selecionado, mostra todos
+                atualizarTabelaHolerites(dadosContabilidadeAtuais.historico_pagamentos || []);
+                return;
+            }
+            
+            const historicoFiltrado = dadosContabilidadeAtuais.historico_pagamentos.filter(
+                item => item.mes_ano === mesSelecionado
+            );
+            
+            atualizarTabelaHolerites(historicoFiltrado);
+        }
+        // Filtrar por período (últimos 3, 6, 12 meses)
+        function filtrarPorPeriodo() {
+            const periodo = parseInt(document.getElementById('periodo-select').value);
+            
+            if (periodo === 0) {
+                atualizarTabelaHolerites(dadosContabilidadeAtuais.historico_pagamentos || []);
+                return;
+            }
+            
+            const dataLimite = new Date();
+            dataLimite.setMonth(dataLimite.getMonth() - periodo);
+            
+            const historicoFiltrado = dadosContabilidadeAtuais.historico_pagamentos.filter(item => {
+                const [ano, mes] = item.mes_ano.split('-');
+                const dataItem = new Date(ano, mes - 1);
+                return dataItem >= dataLimite;
+            });
+            
+            atualizarTabelaHolerites(historicoFiltrado);
+        }
+        // Visualizar holerite detalhado em modal
+        function visualizarHolerite(mesAno) {
+            const holerite = dadosContabilidadeAtuais.historico_pagamentos.find(
+                item => item.mes_ano === mesAno
+            );
+            
+            if (!holerite) {
+                showMessage('Holerite não encontrado', 'error');
+                return;
+            }
+            
+            document.getElementById('modal-titulo').textContent = `Holerite - ${formatarMesAnoExtenso(mesAno)}`;
+            document.getElementById('modal-conteudo').innerHTML = gerarConteudoHolerite(holerite);
+            document.getElementById('holerite-modal').style.display = 'block';
+        }
+        // Imprimir holerite
+        function fecharModal() {
+            document.getElementById('holerite-modal').style.display = 'none';
+        }
+        // Imprimir holerite
+        function gerarConteudoHolerite(holerite) {
+            const salarioBruto = Number(holerite.salario_bruto) || 0;
+            const comissao = Number(holerite.comissao) || 0;
+            const abonos = Number(holerite.abonos) || 0;
+            const descontosFalta = Number(holerite.descontos_falta) || 0; // NOVO CAMPO
+            const descontos = Number(holerite.descontos) || 0;
+            const inssValor = Number(holerite.inss_valor) || 0;
+            const inssPercentual = Number(holerite.inss_percentual) || 0;
+            const irrfValor = Number(holerite.irrf_valor) || 0;
+            const irrfPercentual = Number(holerite.irrf_percentual) || 0;
+            // Calcular salário líquido
+            const salarioLiquido = Number(holerite.salario_liquido) || 
+                (salarioBruto + comissao + abonos - descontos - inssValor - irrfValor - descontosFalta);
+            // Calcular totais
+            const totalProventos = salarioBruto + comissao + abonos;
+            const totalDescontos = descontos + inssValor + irrfValor + descontosFalta; // INCLUI DESCONTOS FALTA
+            
+            // Calcular bases
+            const baseCalcFGTS = Number(holerite.base_calc_fgts) || totalProventos;
+            const fgtsMes = Number(holerite.fgts_mes) || (baseCalcFGTS * 0.08);
+            const baseCalcINSS = Number(holerite.base_calc_inss) || totalProventos;
+            const baseCalcIRRF = Number(holerite.base_calc_irrf) || Math.max(0, totalProventos - inssValor);
+            // Gerar conteúdo HTML
+            return ` <!-- Holerite Detalhado -->
+                <div class="holerite-detalhado">
+                    <!-- Cabeçalho -->
+                    <div class="holerite-header">
+                        <h1 style="margin: 0; font-size: 18px; font-weight: bold;">RECIBO DE PAGAMENTO DE SALÁRIO</h1>
+                        <p style="margin: 5px 0; font-size: 14px;"><strong>Referente ao Mês/Ano:</strong> ${formatarMesAnoExtenso(holerite.mes_ano)}</p>
+                    </div>
+                    
+                    <!-- Dados da Empresa e Funcionário -->
+                    <div class="holerite-dados">
+                        <div>
+                            <p style="margin: 2px 0; font-size: 12px;"><strong>Empresa:</strong> Nome da Empresa LTDA</p>
+                            <p style="margin: 2px 0; font-size: 12px;"><strong>CNPJ:</strong> 00.000.000/0001-00</p>
+                            <p style="margin: 2px 0; font-size: 12px;"><strong>Endereço:</strong> Rua Exemplo, 123 - São Paulo/SP</p>
+                        </div>
+                        <div>
+                            <p style="margin: 2px 0; font-size: 12px;"><strong>Funcionário:</strong> ${dadosContabilidadeAtuais.nome}</p>
+                            <p style="margin: 2px 0; font-size: 12px;"><strong>CPF:</strong> ***.***.***-**</p>
+                            <p style="margin: 2px 0; font-size: 12px;"><strong>Cargo:</strong> ${dadosContabilidadeAtuais.funcao || 'Não informado'}</p>
+                            <p style="margin: 2px 0; font-size: 12px;"><strong>Admissão:</strong> ${dadosContabilidadeAtuais.data_admissao}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Tabela Principal do Holerite -->
+                    <table class="holerite-tabela">
+                        <thead>
+                            <tr style="background-color: #ffffff;">
+                                <th style="width: 15%;">Cód.</th>
+                                <th style="width: 35%;">Descrição</th>
+                                <th style="width: 20%; text-align: center;">Referência</th>
+                                <th style="width: 15%; text-align: right;">Proventos</th>
+                                <th style="width: 15%; text-align: right;">Descontos</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Salário Base -->
+                            <tr>
+                                <td>001</td>
+                                <td>SALÁRIO BASE</td>
+                                <td style="text-align: center;">220,00 h</td>
+                                <td style="text-align: right; color: green;">${formatarMoedaNumerica(salarioBruto)}</td>
+                                <td style="text-align: right;"></td>
+                            </tr>
+                            
+                            <!-- Comissão (se houver) -->
+                            ${comissao > 0 ? `
+                            <tr>
+                                <td>003</td>
+                                <td>COMISSÃO</td>
+                                <td style="text-align: center;">-</td>
+                                <td style="text-align: right; color: green;">${formatarMoedaNumerica(comissao)}</td>
+                                <td style="text-align: right;"></td>
+                            </tr>
+                            ` : ''}
+                            
+                            <!-- Abonos (se houver) -->
+                            ${abonos > 0 ? `
+                            <tr>
+                                <td>005</td>
+                                <td>ABONOS</td>
+                                <td style="text-align: center;">-</td>
+                                <td style="text-align: right; color: green;">${formatarMoedaNumerica(abonos)}</td>
+                                <td style="text-align: right;"></td>
+                            </tr>
+                            ` : ''}
+                            
+                            <!-- Descontos por Falta (NOVO - se houver) -->
+                            ${descontosFalta > 0 ? `
+                            <tr>
+                                <td>097</td>
+                                <td>DESCONTOS POR FALTA</td>
+                                <td style="text-align: center;">-</td>
+                                <td style="text-align: right;"></td>
+                                <td style="text-align: right; color: red;">${formatarMoedaNumerica(descontosFalta)}</td>
+                            </tr>
+                            ` : ''}
+                            
+                            <!-- INSS -->
+                            ${inssValor > 0 ? `
+                            <tr>
+                                <td>051</td>
+                                <td>INSS</td>
+                                <td style="text-align: center;">${inssPercentual.toFixed(2)}%</td>
+                                <td style="text-align: right;"></td>
+                                <td style="text-align: right; color: red;">${formatarMoedaNumerica(inssValor)}</td>
+                            </tr>
+                            ` : ''}
+                            
+                            <!-- IRRF -->
+                            ${irrfValor > 0 ? `
+                            <tr>
+                                <td>054</td>
+                                <td>IRRF</td>
+                                <td style="text-align: center;">${irrfPercentual.toFixed(2)}%</td>
+                                <td style="text-align: right;"></td>
+                                <td style="text-align: right; color: red;">${formatarMoedaNumerica(irrfValor)}</td>
+                            </tr>
+                            ` : ''}
+                            
+                            <!-- Descontos Por Beneficio-->
+                            ${descontos > 0 ? `
+                            <tr>
+                                <td>099</td>
+                                <td>DESCONTOS POR BENEFÍCIOS</td>
+                                <td style="text-align: center;">-</td>
+                                <td style="text-align: right;"></td>
+                                <td style="text-align: right; color: red;">${formatarMoedaNumerica(descontos)}</td>
+                            </tr>
+                            ` : ''}
+                            
+                            <!-- Totais -->
+                            <tr style="font-weight: bold; border-top: 2px solid #000;">
+                                <td colspan="3" style="text-align: right;">TOTAIS:</td>
+                                <td style="text-align: right; color: green;">${formatarMoedaNumerica(totalProventos)}</td>
+                                <td style="text-align: right; color: red;">${formatarMoedaNumerica(totalDescontos)}</td>
+                            </tr>
+                            
+                            <!-- Salário Líquido -->
+                            <tr style="font-weight: bold; background-color: #e0e0e0;">
+                                <td colspan="3" style="text-align: right;">SALÁRIO LÍQUIDO:</td>
+                                <td colspan="2" style="text-align: center;">${formatarMoeda(salarioLiquido)}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <!-- Informações Adicionais -->
+                    <div class="holerite-informacoes">
+                        <p><strong>Base de Cálculo FGTS:</strong> ${formatarMoeda(baseCalcFGTS)}</p>
+                        <p><strong>FGTS do Mês (8%):</strong> ${formatarMoeda(fgtsMes)}</p>
+                        <p><strong>Base de Cálculo INSS:</strong> ${formatarMoeda(baseCalcINSS)}</p>
+                        <p><strong>Base de Cálculo IRRF:</strong> ${formatarMoeda(baseCalcIRRF)}</p>
+                    </div>
+                    
+                    <!-- Observações -->
+                    <div class="holerite-observacoes">
+                        <p><strong>Observações:</strong></p>
+                        <p>1. O pagamento será efetuado até o 5º dia útil do mês subsequente.</p>
+                        <p>2. Dúvidas sobre este holerite devem ser esclarecidas no Departamento Pessoal.</p>
+                    </div>
+                    
+                    <!-- Assinatura -->
+                    <div class="holerite-assinatura">
+                        <p>________________________________________</p>
+                        <p>Assinatura do Funcionário</p>
+                    </div>
+                </div>
+            `;
+        }
+        // Formatar valor numérico com vírgula
+        function formatarMoedaNumerica(valor) {
+            return valor.toFixed(2).replace('.', ',');
+        }
+        // Imprimir holerite
+        function imprimirHolerite() {
+            const modalConteudo = document.getElementById('modal-conteudo');
+            const janelaImpressao = window.open('', '_blank');
+            janelaImpressao.document.write(`
+                <html>
+                    <head>
+                        <title>Holerite - ${document.getElementById('modal-titulo').textContent}</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; margin: 20px; }
+                            .holerite-detalhado { max-width: 800px; margin: 0 auto; }
+                            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                            th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+                            th { background-color: #f0f0f0; }
+                            @media print {
+                                body { margin: 0; }
+                                .no-print { display: none; }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        ${modalConteudo.innerHTML}
+                        <div class="no-print" style="text-align: center; margin-top: 20px;">
+                            <button onclick="window.print()">Imprimir</button>
+                            <button onclick="window.close()">Fechar</button>
+                        </div>
+                    </body>
+                </html>
+            `);
+            janelaImpressao.document.close();
+        }
+// Exportar holerite para PDF usando jsPDF e html2canvas
+function exportarHoleritePDF() {
+    const { jsPDF } = window.jspdf;
+    
+    // Capturar o conteúdo do holerite
+    const elemento = document.querySelector('.holerite-detalhado');
+    // Verificar se o elemento existe
+    if (!elemento) {
+        showMessage('Erro: Conteúdo do holerite não encontrado', 'error');
+        return;
+    }
+    // Mostrar mensagem de carregamento
+    showMessage('Gerando PDF...', 'info');
+    
+    // Usar html2canvas para capturar o conteúdo como imagem
+    html2canvas(elemento, {
+        scale: 2, // Melhor qualidade
+        useCORS: true,
+        logging: false
+    }).then(canvas => {
+        // Criar PDF
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const imgData = canvas.toDataURL('image/png');
+        
+        // Calcular dimensões para caber na página A4
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const imgWidth = canvas.width;
+        const imgHeight = canvas.height;
+        const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+        const imgX = (pdfWidth - imgWidth * ratio) / 2;
+        const imgY = 10;
+        
+        // Adicionar imagem ao PDF
+        pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+        
+        // Adicionar data de geração no rodapé
+        const dataGeracao = new Date().toLocaleString('pt-BR');
+        pdf.setFontSize(10);
+        pdf.setTextColor(100);
+        pdf.text(`Documento gerado em ${dataGeracao}`, pdfWidth / 2, pdfHeight - 10, { align: 'center' });
+        
+        // Salvar o PDF
+        pdf.save(`holerite-${document.getElementById('modal-titulo').textContent.replace(/\s+/g, '-').toLowerCase()}.pdf`);
+        
+        showMessage('PDF gerado com sucesso!', 'success');
+        
+    }).catch(error => {
+        console.error('Erro ao gerar PDF:', error);
+        showMessage('Erro ao gerar PDF. Tente novamente.', 'error');
+        
+        // Fallback: Abrir em nova janela para impressão
+        fallbackExportPDF();
+    });
+}
+
+// Fallback caso html2canvas falhe
+function fallbackExportPDF() {
+    const modalConteudo = document.getElementById('modal-conteudo').innerHTML;
+    const modalTitulo = document.getElementById('modal-titulo').textContent;
+    // Abrir nova janela com o conteúdo para o usuário imprimir manualmente  
+    const janela = window.open('', '_blank');
+    janela.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>${modalTitulo}</title>
+            <meta charset="UTF-8">
+            <style>
+                body { 
+                    font-family: Arial, sans-serif; 
+                    margin: 20px; 
+                    color: #000;
+                }
+                .holerite-detalhado { 
+                    max-width: 800px; 
+                    margin: 0 auto;
+                }
+                table { 
+                    width: 100%; 
+                    border-collapse: collapse; 
+                    margin: 20px 0; 
+                    font-size: 12px;
+                }
+                th, td { 
+                    border: 1px solid #000; 
+                    padding: 8px; 
+                }
+                th { 
+                    background-color: #f0f0f0; 
+                }
+                @media print {
+                    body { margin: 10px; }
+                }
+            </style>
+        </head>
+        <body>
+            ${modalConteudo}
+            <div style="text-align: center; margin-top: 20px;">
+                <button onclick="window.print()" style="padding: 10px 20px; margin: 5px;">Imprimir</button>
+                <button onclick="window.close()" style="padding: 10px 20px; margin: 5px;">Fechar</button>
+            </div>
+            <p style="text-align: center; font-size: 10px; color: #666;">
+                Documento gerado em ${new Date().toLocaleString('pt-BR')}
+            </p>
+        </body>
+        </html>
+    `);
+    janela.document.close();
+}
+// Exportar relatório financeiro completo para PDF
+function exportarParaPDF() {
+    if (!dadosContabilidadeAtuais || !dadosContabilidadeAtuais.historico_pagamentos) {
+        showMessage('Nenhum dado disponível para exportação', 'error');
+        return;
+    }
+    // Construir o conteúdo HTML do relatório
+    // Incluir estilos CSS para o PDF
+    const conteudo = `
+        <html>
+        <head>
+            <title>Relatório Financeiro - ${dadosContabilidadeAtuais.nome}</title>
+            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+            <style>
+                /* Estilos para o corpo do documento PDF */
+                body { 
+                    font-family: 'Inter', Arial, sans-serif; 
+                    margin: 40px; 
+                    color: #333; 
+                    line-height: 1.6; 
+                    font-size: 14px;
+                }
+
+                /* Cabeçalho Aprimorado (Logo + Título) */
+                .pdf-header { 
+                    display: flex; 
+                    justify-content: space-between; 
+                    align-items: center; 
+                    padding-bottom: 20px; 
+                    border-bottom: 3px solid #004d99; /* Linha de separação corporativa */
+                    margin-bottom: 30px; 
+                }
+                .pdf-header img { 
+                    max-width: 150px; 
+                    height: auto; 
+                    border-radius: 4px; 
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                }
+                .pdf-title {
+                    text-align: right;
+                }
+                .pdf-title h1 { 
+                    color: #004d99; 
+                    margin: 0; 
+                    font-size: 26px; 
+                    font-weight: 700;
+                }
+                .pdf-title p { 
+                    margin: 2px 0; 
+                    font-size: 13px; 
+                    color: #555;
+                }
+
+                /* Informações do Funcionário */
+                .employee-info {
+                    padding: 10px 0;
+                    border-bottom: 1px solid #ddd;
+                    margin-bottom: 20px;
+                    font-size: 15px;
+                }
+                .employee-info strong {
+                    color: #004d99;
+                }
+
+                /* Tabela de Pagamentos */
+                table { 
+                    width: 100%; 
+                    border-collapse: collapse; 
+                    margin: 20px 0; 
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+                }
+                th, td { 
+                    border: 1px solid #e0e0e0; 
+                    padding: 12px 10px; 
+                    text-align: left; 
+                }
+                th { 
+                    background-color: #f0f8ff; /* Azul claro para o cabeçalho */
+                    color: #004d99; 
+                    font-weight: 600; 
+                    text-transform: uppercase;
+                    font-size: 12px;
+                }
+                /* Listras zebradas para melhor leitura */
+                tbody tr:nth-child(even) { background-color: #f9f9f9; }
+                
+                /* Destaque para o status */
+                .status-pago { color: #1a73e8; font-weight: bold; }
+                .status-pendente { color: #f9a825; font-weight: bold; }
+                .status-atrasado { color: #e53935; font-weight: bold; }
+
+                /* Área de Assinatura no Rodapé */
+                .signature-area { 
+                    margin-top: 80px; 
+                    padding-top: 30px;
+                    border-top: 1px dashed #aaa; 
+                    text-align: center; 
+                }
+                .signature-area h2 {
+                    font-size: 18px;
+                    color: #004d99;
+                    margin-bottom: 30px;
+                }
+                .signature-box { 
+                    display: flex; 
+                    justify-content: space-around; 
+                    gap: 80px;
+                    margin-top: 50px;
+                }
+                .signature-item { 
+                    text-align: center;
+                    flex-grow: 1; /* Distribui o espaço igualmente */
+                }
+                .signature-line { 
+                    border-top: 1px solid #333; 
+                    width: 100%; 
+                    max-width: 280px;
+                    display: block; 
+                    margin: 0 auto 5px auto; 
+                }
+                .signature-item p {
+                    margin-top: 5px;
+                    font-size: 13px;
+                }
+
+                /* Responsividade para impressão */
+                @media print {
+                    body { margin: 20px; }
+                    .pdf-header { margin-bottom: 20px; }
+                    table { font-size: 12px; }
+                    .signature-area { margin-top: 60px; }
+                }
+            </style>
+        </head>
+        <body>
+            <!-- 1. CABEÇALHO COM LOGO E TÍTULO -->
+            <div class="pdf-header">
+                <img src="/static/images/logo TCC.png" 
+                     alt="Logo da Empresa" 
+                     onerror="this.onerror=null; this.src='https://placehold.co/150x50/004d99/ffffff?text=LOGO+EMPRESA';" />
+                <div class="pdf-title">
+                    <h1>Relatório Financeiro</h1>
+                    <p><strong>Período:</strong> Histórico de Pagamentos</p>
+                    <p><strong>Emissão:</strong> ${new Date().toLocaleDateString('pt-BR')}</p>
+                </div>
+            </div>
+
+            <!-- Informações do Funcionário -->
+            <div class="employee-info">
+                <p><strong>Funcionário:</strong> ${dadosContabilidadeAtuais.nome || 'Não informado'}</p>
+                <p><strong>Cargo:</strong> ${dadosContabilidadeAtuais.funcao || 'Não informado'}</p>
+                <p><strong>Data de Admissão:</strong> ${dadosContabilidadeAtuais.data_admissao || 'Não informada'}</p>
+                <p><strong>Salário Base:</strong> ${formatarMoeda(dadosContabilidadeAtuais.salario_base || 0)}</p>
+            </div>
+
+            <!-- 2. TABELA DE DETALHES -->
+            <table>
+                <thead>
+                    <tr>
+                        <th>Mês/Ano</th>
+                        <th>Salário Bruto</th>
+                        <th>Abonos</th>
+                        <th>Descontos</th>
+                        <th>Salário Líquido</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${dadosContabilidadeAtuais.historico_pagamentos.map(item => {
+                        const status = item.status || 'Pago';
+                        let statusClass = 'status-pago';
+                        if (status === 'Pendente') statusClass = 'status-pendente';
+                        if (status === 'Atrasado') statusClass = 'status-atrasado';
+                        
+                        return `
+                            <tr>
+                                <td>${formatarMesAno(item.mes_ano)}</td>
+                                <td>${formatarMoeda(Number(item.salario_bruto) || 0)}</td>
+                                <td>${formatarMoeda(Number(item.abonos) || 0)}</td>
+                                <td>${formatarMoeda(Number(item.descontos) || 0)}</td>
+                                <td>${formatarMoeda(Number(item.salario_liquido) || 0)}</td>
+                                <td class="${statusClass}">${status}</td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
+
+            <!-- Resumo Financeiro -->
+            <div style="margin-top: 30px; padding: 15px; background-color: #f8f9fa; border-radius: 5px;">
+                <h3 style="color: #004d99; margin-top: 0;">Resumo Financeiro</h3>
+                <p><strong>Total de Períodos:</strong> ${dadosContabilidadeAtuais.historico_pagamentos.length} meses</p>
+                <p><strong>Média Salário Líquido:</strong> ${formatarMoeda(
+                    dadosContabilidadeAtuais.historico_pagamentos.reduce((acc, item) => 
+                        acc + (Number(item.salario_liquido) || 0), 0) / dadosContabilidadeAtuais.historico_pagamentos.length
+                )}</p>
+            </div>
+
+            <p style="margin-top: 40px; font-size: 12px; color: #777;">
+                Este documento é uma representação do histórico de pagamentos e não substitui os comprovantes individuais de folha.
+            </p>
+
+            <!-- 3. ÁREA DE ASSINATURA -->
+            <div class="signature-area">
+                <h2>Confirmação e Validação</h2>
+                
+                <div class="signature-box">
+                    <div class="signature-item">
+                        <div class="signature-line"></div>
+                        <p><strong>${dadosContabilidadeAtuais.nome || 'Funcionário'}</strong><br>Assinatura do Funcionário</p>
+                    </div>
+                    <div class="signature-item">
+                        <div class="signature-line"></div>
+                        <p><strong>Departamento Financeiro</strong><br>Assinatura do Responsável</p>
+                    </div>
+                </div>
+            </div>
+        </body>
+        </html>
+    `;
+    
+    const janela = window.open('', '_blank');
+    janela.document.write(conteudo);
+    janela.document.close();
+    janela.focus();
+    janela.print();
+}
+
+        // Fechar modal ao clicar fora dele
+        window.onclick = function(event) {
+            const modal = document.getElementById('holerite-modal');
+            if (event.target === modal) {
+                fecharModal();
+            }
+        };
+    </script>
+</body>
+</html>

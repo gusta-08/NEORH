@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enviar Feedback - Sistema de RH</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}?v={{ range(1, 1000) | random }}" type="image/x-icon">
+</head>
+<body>
+    <!-- Cabeçalho e estrutura permanecem iguais -->
+    <header>
+        <nav>
+            <h1>Enviar Feedback</h1>
+            <ul class="nav-links"> <li><a href="/dashboard-page">Home</a></li>
+                <li>
+                    <img src="/static/images/logo TCC branca.png" alt="Logo da Empresa" class="header-logo">
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container">
+        <h2>Seu Feedback é Importante!</h2>
+        <div id="message-area" class="alert" style="display: none;"></div>
+        <form id="feedback-form">
+            <div class="form-group">
+                <label for="feedback-message">Mensagem:</label>
+                <textarea id="feedback-message" rows="8" required placeholder="Descreva seu feedback aqui..."></textarea>
+            </div>
+            <button type="submit">Enviar Feedback</button>
+        </form>
+    </main>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+        // Função para inicialização segura
+        function initPage() {
+            try {
+                checkUserRole(['funcionario']);
+
+                const feedbackForm = document.getElementById('feedback-form');
+                if (feedbackForm) {
+                    feedbackForm.addEventListener('submit', handleFeedbackSubmit);
+                }
+
+            } catch (e) {
+                console.error("Erro na inicialização:", e);
+                alert("Erro ao carregar a página. Recarregando...");
+                location.reload();
+            }
+        }
+
+        // Função para lidar com o envio do feedback
+        async function handleFeedbackSubmit(e) {
+            e.preventDefault();
+            
+            const feedbackMessageInput = document.getElementById('feedback-message'); // Campo de mensagem
+            const messageArea = document.getElementById('message-area'); // Área de mensagens
+            const mensagem = feedbackMessageInput.value.trim(); // Obtém a mensagem
+
+            if (!mensagem) {
+                showMessage('Por favor, digite sua mensagem de feedback.', 'warning'); // Validação simples
+                return;
+            }
+
+            try { // Tenta enviar o feedback
+                const response = await fetch('/api/feedback', { // URL da API
+                    method: 'POST',  // Alterado para POST
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...getAuthHeaders()  // Inclui o token de autenticação
+                    },
+                    body: JSON.stringify({ mensagem })  // Inclui a mensagem no corpo
+                });
+
+                if (!response.ok) { // Verifica se a resposta é OK
+                    const errorData = await response.json().catch(() => ({})); // Tenta obter a mensagem de erro
+                    throw new Error(errorData.message || 'Erro ao enviar feedback'); // Lança o erro
+                }
+
+                const data = await response.json(); // Obtém a resposta JSON
+                showMessage(data.message || 'Feedback enviado com sucesso!', 'success'); // Mostra mensagem de sucesso
+                feedbackMessageInput.value = ''; // Limpa o campo de mensagem
+                
+            } catch (error) { // Captura erros
+                console.error('Erro ao enviar feedback:', error); // Log do erro
+                showMessage(error.message || 'Erro de conexão. Tente novamente.', 'danger'); // Mostra mensagem de erro
+            }
+        }
+
+        // Inicialização quando o DOM estiver pronto
+        if (typeof checkUserRole !== 'undefined') {
+            document.addEventListener('DOMContentLoaded', initPage); // Inicializa a página
+        } else {
+            console.error("Erro crítico: Funções não carregadas"); // Log de erro crítico
+            setTimeout(() => location.reload(), 1000); // Tenta recarregar após 1 segundo
+        }
+    </script>
+</body>
+</html>

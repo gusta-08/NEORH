@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avisos da Empresa - Sistema de RH</title>
+
+    <!-- Importa o arquivo CSS principal e um favicon com cache-busting -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}?v={{ range(1, 1000) | random }}" type="image/x-icon">
+</head>
+<body>
+    <!-- Cabeçalho e navegação -->
+    <header>
+        <nav>
+            <h1>Avisos da Empresa</h1>
+            <ul class="nav-links"> <li><a href="/dashboard-page">Home</a></li>
+                <li>
+                    <img src="/static/images/logo TCC branca.png" alt="Logo da Empresa" class="header-logo">
+                </li>
+            </ul>
+        </nav>
+    </header>
+    
+    <!-- Conteúdo principal -->
+    <main class="container">
+        <h2>Todos os Avisos</h2>
+        <!-- Área para mensagens de erro/sucesso -->
+        <div id="message-area" class="alert" style="display: none;"></div>
+        
+        <!-- Lista de avisos carregada via JavaScript -->
+        <div id="avisos-list">
+            <p>Carregando avisos...</p>
+        </div>
+    </main>
+
+    <!-- Scripts do sistema -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+        // Aguarda o carregamento da página para iniciar a lógica
+        document.addEventListener('DOMContentLoaded', async () => { // Evento de carregamento do DOM
+
+            // Permite acesso apenas a funcionários e gerentes
+            checkUserRole(['funcionario', 'gerente']); // Verifica o papel do usuário
+
+            // Elemento onde os avisos serão exibidos
+            const avisosListDiv = document.getElementById('avisos-list'); // Div onde os avisos serão exibidos
+
+            try {
+                // Faz uma requisição para a API de avisos
+                const response = await fetch('/api/avisos', {
+                    method: 'GET',
+                    headers: getAuthHeaders() // Inclui headers de autenticação
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    avisosListDiv.innerHTML = ''; // Limpa o conteúdo inicial
+                    if (data.length > 0) {
+                        // Cria um card para cada aviso retornado
+                        data.forEach(aviso => {
+                            const avisoCard = document.createElement('div');
+                            avisoCard.className = 'aviso-card'; // Classe estilizada no CSS
+                            avisoCard.innerHTML = `
+                                <h3>${aviso.titulo}</h3>
+                                <p>${aviso.mensagem}</p>
+                                <small>Publicado em: ${new Date(aviso.data_envio).toLocaleString()}</small>
+                            `;
+                            avisosListDiv.appendChild(avisoCard); // Adiciona o card à lista
+                        });
+                    } else {
+                        // Caso não haja avisos publicados
+                        avisosListDiv.innerHTML = '<p>Nenhum aviso publicado ainda.</p>'; // Mensagem amigável
+                    }
+                } else {
+                    // Exibe mensagem de erro retornada pela API
+                    showMessage(data.message || 'Erro ao carregar avisos.', 'danger'); 
+                }
+            } catch (error) {
+                // Trata falha de conexão
+                console.error('Erro ao carregar avisos:', error); // Loga o erro no console para depuração
+                showMessage('Erro de conexão ao carregar avisos.', 'danger'); // Mensagem amigável para o usuário
+            }
+        });
+    </script>
+</body>
+</html>

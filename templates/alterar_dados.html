@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Perfil - Sistema de RH</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}?v={{ range(1, 1000) | random }}" type="image/x-icon">
+</head>
+<body>
+    <header>
+        <nav>
+            <h1>Alterar Dados</h1>
+            <ul class="nav-links"> <li><a href="/dashboard-page">Home</a></li>
+                <li>
+                    <img src="/static/images/logo TCC branca.png" alt="Logo da Empresa" class="header-logo">
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container">
+        <h2>Meus Dados Pessoais</h2>
+        <div id="message-area" class="alert" style="display: none;"></div>
+
+        <div class="profile-picture-section">
+            <img id="profile-picture" src="" alt="Foto de Perfil" class="profile-picture">
+            <div class="profile-actions">
+                <button id="change-picture-btn">Alterar Foto</button>
+                <input type="file" id="picture-input" accept="image/*" class="hidden">
+            </div>
+        </div>
+
+        <div class="form-section">
+            <form id="profile-form">
+                <div class="form-group">
+                    <label for="nome">Nome Completo:</label>
+                    <input type="text" id="nome" name="nome" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="telefone">Telefone:</label> 
+                    <input type="tel" id="telefone" name="telefone" placeholder="(XX) XXXXX-XXXX" maxlength="15">
+                </div>
+                <div class="form-group">
+                    <label for="nascimento">Data de Nascimento:</label>
+                    <input type="date" id="nascimento" name="nascimento">
+                </div>
+                <div class="form-group">
+                    <label for="endereco">Endereço Completo:</label>
+                    <input type="text" id="endereco" name="endereco">
+                </div>
+                <button type="submit">Salvar Alterações</button>
+            </form>
+        </div>
+
+        <div class="form-section">
+            <h3>Alterar Senha</h3>
+            <form id="change-password-form">
+                <div class="form-group">
+                    <label for="current-password">Senha Atual:</label>
+                    <input type="password" id="current-password" name="current-password" required>
+                </div>
+                <div class="form-group">
+                    <label for="new-password">Nova Senha:</label> 
+                    <input type="password" id="new-password" name="new-password" required minlength="8">
+                </div>
+                <button type="submit">Alterar Senha</button>
+            </form>
+        </div>
+    </main>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script> 
+    <script>
+        // Função melhorada para aplicar máscara de telefone
+        function aplicarMascaraTelefone(telefone) {
+            // Remove tudo que não é número
+            const numeros = telefone.replace(/\D/g, '');
+            
+            // Limita a 11 dígitos (máximo para celular brasileiro)
+            const numerosLimitados = numeros.slice(0, 11);
+            
+            // Aplica a máscara conforme o tamanho do número
+            if (numerosLimitados.length <= 10) {
+                // Formato para telefone fixo: (XX) XXXX-XXXX
+                return numerosLimitados.replace(/(\d{2})(\d{4})(\d{0,4})/, function(_, ddd, prefixo, sufixo) {
+                    let resultado = '(' + ddd + ') ';
+                    if (prefixo) resultado += prefixo;
+                    if (sufixo) resultado += '-' + sufixo;
+                    return resultado;
+                });
+            } else {
+                // Formato para celular: (XX) XXXXX-XXXX
+                return numerosLimitados.replace(/(\d{2})(\d{5})(\d{0,4})/, function(_, ddd, prefixo, sufixo) {
+                    let resultado = '(' + ddd + ') ';
+                    if (prefixo) resultado += prefixo;
+                    if (sufixo) resultado += '-' + sufixo;
+                    return resultado;
+                });
+            }
+        }
+
+        // Executa quando a página carregar
+        document.addEventListener('DOMContentLoaded', async () => {
+            checkUserRole(['funcionario', 'gerente']);
+
+            const telefoneInput = document.getElementById('telefone');
+            let ultimoValorFormatado = '';
+
+            // Evento para formatar enquanto digita (versão melhorada)
+            telefoneInput.addEventListener('input', function(e) {
+                const input = e.target;
+                const cursorPosition = input.selectionStart;
+                const inputValue = input.value;
+                
+                // Salva os caracteres digitados antes do cursor
+                const valorAntesCursor = inputValue.substring(0, cursorPosition);
+                const digitosAntesCursor = valorAntesCursor.replace(/\D/g, '').length;
+                
+                // Aplica a máscara
+                const valorFormatado = aplicarMascaraTelefone(inputValue);
+                input.value = valorFormatado;
+                ultimoValorFormatado = valorFormatado;
+                
+                // Calcula nova posição do cursor
+                let novaPosicaoCursor = 0;
+                let digitosEncontrados = 0;
+                
+                for (let i = 0; i < valorFormatado.length; i++) {
+                    if (/\d/.test(valorFormatado[i])) {
+                        digitosEncontrados++;
+                    }
+                    if (digitosEncontrados === digitosAntesCursor) {
+                        novaPosicaoCursor = i + 1;
+                        break;
+                    }
+                }
+                
+                // Se não encontrou posição exata, coloca no final
+                if (novaPosicaoCursor === 0) {
+                    novaPosicaoCursor = valorFormatado.length;
+                }
+                
+                input.setSelectionRange(novaPosicaoCursor, novaPosicaoCursor);
+            });
+
+            // Evento para permitir navegação com teclado
+            telefoneInput.addEventListener('keydown', function(e) {
+                // Permite: números, backspace, delete, tab, setas, home, end
+                if (/[\d\b\t\←\→\↑\↓\↖\↘]/.test(e.key) || e.ctrlKey || e.metaKey) {
+                    return true;
+                }
+                e.preventDefault();
+            });
+
+            // Evento para evitar colar texto não numérico
+            telefoneInput.addEventListener('paste', function(e) {
+                e.preventDefault();
+                const texto = (e.clipboardData || window.clipboardData).getData('text');
+                const numeros = texto.replace(/\D/g, '');
+                document.execCommand('insertText', false, numeros);
+            });
+
+            const profilePicture = document.getElementById('profile-picture');
+            const changePictureBtn = document.getElementById('change-picture-btn');
+            const pictureInput = document.getElementById('picture-input');
+
+            function showMessage(message, isError = false) {
+                const messageArea = document.getElementById('message-area');
+                messageArea.textContent = message;
+                messageArea.style.display = 'block';
+                messageArea.className = isError ? 'alert error' : 'alert success';
+                setTimeout(() => { 
+                    messageArea.style.display = 'none';
+                }, 5000);
+            }
+
+            async function loadProfileData() {
+                try {
+                    const response = await fetch('/api/meus-dados', {
+                        method: 'GET',
+                        headers: getAuthHeaders()
+                    });
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        document.getElementById('nome').value = data.nome || '';
+                        document.getElementById('email').value = data.email || '';
+                        
+                        // Aplica a máscara no telefone ao carregar os dados
+                        if (data.telefone) {
+                            telefoneInput.value = aplicarMascaraTelefone(data.telefone);
+                            ultimoValorFormatado = telefoneInput.value;
+                        } else {
+                            telefoneInput.value = '';
+                        }
+                        
+                        document.getElementById('nascimento').value = data.nascimento || '';
+                        document.getElementById('endereco').value = data.endereco || '';
+                        
+                        profilePicture.src = data.foto_perfil && data.foto_perfil !== 'default-user.png'
+                            ? `/static/uploads/perfil/${data.foto_perfil}`
+                            : `/static/images/default-user.png`;
+                    } 
+                } catch (error) {
+                    console.error('Erro ao carregar dados:', error);
+                    showMessage('Erro ao carregar dados do perfil', true);
+                }
+            }
+
+            changePictureBtn.addEventListener('click', () => {
+                pictureInput.click();
+            });
+
+            pictureInput.addEventListener('change', async (e) => {
+                if (e.target.files.length > 0) {
+                    const file = e.target.files[0];
+                    
+                    if (!file.type.startsWith('image/')) {
+                        showMessage('Por favor, selecione um arquivo de imagem.', true);
+                        return;
+                    }
+
+                    const formData = new FormData();
+                    formData.append('foto', file);
+
+                    try {
+                        const response = await fetch('/api/upload-foto-perfil', {
+                            method: 'POST', 
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('jwt_token')}`
+                            },
+                            body: formData
+                        });
+
+                        const data = await response.json();
+                        if (response.ok) { 
+                            showMessage('Foto de perfil atualizada com sucesso!');
+                            profilePicture.src = `/static/uploads/perfil/${data.filename}?${new Date().getTime()}`;
+                        } else {
+                            showMessage(data.message || 'Erro ao atualizar foto de perfil', true);
+                        }
+                    } catch (error) {
+                        console.error('Erro ao enviar foto:', error); 
+                        showMessage('Erro ao enviar foto de perfil', true); 
+                    }
+                }
+            });
+
+            document.getElementById('profile-form').addEventListener('submit', async (e) => { 
+                e.preventDefault();
+                
+                try {
+                    // Remove a máscara do telefone antes de enviar (só números)
+                    const telefoneSemMascara = telefoneInput.value.replace(/\D/g, '');
+                    
+                    const formData = {
+                        nome: document.getElementById('nome').value,
+                        email: document.getElementById('email').value,
+                        telefone: telefoneSemMascara,
+                        endereco: document.getElementById('endereco').value
+                    };
+
+                    const nascimentoInput = document.getElementById('nascimento').value;
+                    if (nascimentoInput) {
+                        formData.nascimento = nascimentoInput;
+                    }
+
+                    const response = await fetch('/api/meus-dados', {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('jwt_token')}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(formData)
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || 'Erro ao atualizar dados');
+                    }
+
+                    const data = await response.json();
+                    showMessage(data.message || 'Dados atualizados com sucesso!');
+                } catch (error) {
+                    console.error('Erro ao atualizar dados:', error);
+                    showMessage(error.message || 'Erro ao atualizar dados. Tente novamente.', true);
+                }
+            });
+
+            document.getElementById('change-password-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                try {
+                    const response = await fetch('/api/meus-dados/alterar-senha', {
+                        method: 'PUT',
+                        headers: {
+                            ...getAuthHeaders(),
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            senha_atual: document.getElementById('current-password').value,
+                            nova_senha: document.getElementById('new-password').value
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (response.ok) {
+                        showMessage('Senha alterada com sucesso!');
+                        document.getElementById('change-password-form').reset();
+                    } else {
+                        showMessage(data.message || 'Erro ao alterar senha', true);
+                    }
+                } catch (error) {
+                    console.error('Erro ao alterar senha:', error);
+                    showMessage('Erro ao alterar senha', true);
+                }
+            });
+
+            loadProfileData();
+        });
+    </script>
+</body>
+</html>

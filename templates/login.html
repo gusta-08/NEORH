@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Responsivo -->
+    <title>Login - Sistema de RH</title> <!-- Título da aba -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"> <!-- Importa o CSS -->
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}?v={{ range(1, 1000) | random }}" type="image/x-icon"> <!-- Evita cache do favicon -->
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <h1 class="auth-title">Login</h1> <!-- Título da tela -->
+            
+            <div id="message-area" class="alert" style="display: none;"></div> <!-- Área de mensagens -->
+            
+            <form id="login-form" class="auth-form">
+                <div class="form-group">
+                    <label for="email">Email</label> <!-- Label do campo de email -->
+                    <input type="email" id="email" name="email" required placeholder="Digite seu email"> <!-- Campo de email - obrigatório -->
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Senha</label> <!-- Label do campo de senha -->
+                    <input type="password" id="password" name="password" required placeholder="Digite sua senha"> <!-- Campo de senha - obrigatório -->
+                </div>
+                
+                <button type="submit" class="auth-button">Entrar</button> <!-- Botão de login -->
+            </form>
+            
+            <div class="auth-footer">
+                <p>Não tem uma conta? <a href="/register-page">Cadastre-se</a></p>  <!-- Link para a página de cadastro -->
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script> <!-- Importa o JavaScript -->
+    <script>
+        document.getElementById('login-form').addEventListener('submit', async (e) => { 
+            e.preventDefault(); // Evita o envio padrão do formulário
+            const email = document.getElementById('email').value; // Pega o valor do campo email
+            const password = document.getElementById('password').value; // Pega o valor do campo senha
+
+            try {
+                const response = await fetch('/login', { // Endpoint de login
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json' // Tipo de conteúdo JSON
+                    },
+                    body: JSON.stringify({ email, senha: password }) // Envia email e senha em JSON
+                });
+
+                const data = await response.json(); // Resposta do servidor
+
+                if (response.ok) {
+                    localStorage.setItem('jwt_token', data.token); // Armazena o token JWT
+                    localStorage.setItem('user_type', data.tipo_usuario); // Armazena o tipo de usuário
+                    localStorage.setItem('user_name', data.nome_usuario); // Armazena o nome do usuário
+                    showMessage('Login realizado com sucesso!', 'success'); // Mensagem de sucesso
+                    window.location.href = '/dashboard-page'; // Redireciona para o dashboard
+                } else {
+                    showMessage(data.message || 'Erro ao fazer login.', 'danger'); // Mensagem de erro
+                }
+            } catch (error) {
+                console.error('Erro:', error); // Log do erro no console
+                showMessage('Erro de conexão. Tente novamente.', 'danger'); // Mensagem de erro de conexão
+            }
+        });
+    </script>
+</body>
+</html>

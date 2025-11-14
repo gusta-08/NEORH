@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - Sistema de RH</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Adicionando Font Awesome para ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}?v={{ range(1, 1000) | random }}" type="image/x-icon">
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <div class="header-content">
+                <div class="user-info">
+                    <h1>Bem-vindo, <span id="user-name-display"></span>!</h1>
+                    <p>Tipo de usuário: <strong id="user-type-display" class="user-type-text"></strong></p>
+                </div>
+                <div class="logo-container">
+                    <!-- Substitua o src pelo caminho real da sua logo -->
+                    <img src="/static/images/logo TCC.png" alt="Logo do Sistema de RH" class="site-logo">
+                    <!-- Texto alternativo caso a imagem não carregue -->
+                    <span class="logo-text">RH System</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="dashboard-main">
+            <div id="message-area" class="alert" style="display: none;"></div>
+
+            <section class="user-section">
+                <h2>Área do <span id="user-role-title"></span></h2>
+                
+                <div class="action-cards">
+                    <!-- Funcionário -->
+                    <div class="funcionario-only action-card">
+                        <div class="card-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <h3>Meus Pontos</h3>
+                        <p>Visualize seu controle de entrada e saída.</p>
+                        <a href="/meus-pontos-page" class="card-button">Acessar</a>
+                    </div>
+                    
+                    <div class="funcionario-only action-card">
+                        <div class="card-icon">
+                            <i class="fas fa-bullhorn"></i>
+                        </div>
+                        <h3>Avisos</h3>
+                        <p>Leia comunicados e avisos da empresa.</p>
+                        <a href="/avisos-page" class="card-button">Ver Avisos</a>
+                    </div>
+                    
+                    <div class="funcionario-only action-card">
+                        <div class="card-icon">
+                            <i class="fas fa-comment-dots"></i>
+                        </div>
+                        <h3>Enviar Feedback</h3>
+                        <p>Compartilhe suas sugestões e dúvidas com a gerência.</p>
+                        <a href="/feedback-page" class="card-button">Enviar</a>
+                    </div>
+                    
+                    <div class="funcionario-only action-card">
+                        <div class="card-icon">
+                            <i class="fas fa-file-medical"></i>
+                        </div>
+                        <h3>Carregar Atestados</h3>
+                        <p>Envie seus atestados, para verificação da falta </p>
+                        <a href="/atestados-page" class="card-button">Enviar</a>
+                    </div>
+
+                    <div class="funcionario-only action-card">
+                        <div class="card-icon">
+                            <i class="fas fa-calculator"></i>
+                        </div>
+                        <h3>Contabilidade</h3>
+                        <p>Salário, abonos e descontos, férias </p>
+                        <a href="/contabilidade-page" class="card-button">Acessar</a>
+                    </div>
+
+                    <!-- Gerente -->
+                    <div class="gerente-only action-card">
+                        <div class="card-icon">
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                        <h3>Cadastrar Funcionário</h3>
+                        <p>Adicione novos colaboradores à equipe com facilidade.</p>
+                        <a href="/adicionar-funcionario" class="card-button">Cadastrar</a>
+                    </div>
+                    
+                    <div class="gerente-only action-card">
+                        <div class="card-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <h3>Listar Funcionários</h3>
+                        <p>Veja todos os funcionários cadastrados no sistema.</p>
+                        <a href="/gerenciamento-equipe" class="card-button">Listar</a>
+                    </div>
+                    
+                    <div class="gerente-only action-card">
+                        <div class="card-icon">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <h3>Relatórios</h3>
+                        <p>Acompanhe o desempenho e dados da equipe.</p>
+                        <a href="/relatorios-page" class="card-button">Gerar</a>
+                    </div>
+                </div>
+
+                <div class="gerente-only action-card">
+                    <div class="card-icon">
+                        <i class="fas fa-calculator"></i>
+                    </div>
+                    <h3>Editar Contabilidade</h3>
+                    <p>Gerencie os dados contábeis dos funcionários.</p>
+                    <a href="/editar-contabilidade" class="card-button">Editar</a>
+                </div>
+            </section>
+
+            <section class="common-section">
+                <div class="action-card">
+                    <div class="card-icon">
+                        <i class="fas fa-user-edit"></i>
+                    </div>
+                    <h3>Alterar Dados</h3>
+                    <p>Atualize seus dados pessoais e senha.</p>
+                    <a href="/alterar-dados-page" class="card-button">Alterar</a>
+                </div>
+                
+                <div class="gerente-only action-card">
+                    <div class="card-icon">
+                        <i class="fas fa-bullhorn"></i>
+                    </div>
+                    <h3>Avisos Gerais</h3>
+                    <p>Envie comunicações importantes para todos os colaboradores.</p>
+                    <a href="/avisos-gerais" class="card-button">Gerenciar</a>
+                </div>
+            </section>
+        </main>
+
+        <footer class="dashboard-footer">
+            <a href="#" id="logout-button" class="logout-button">Sair</a>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            checkUserRole(['gerente', 'funcionario']);
+            
+            // Atualiza o título da área conforme o tipo de usuário
+            const roleTitle = document.getElementById('user-role-title');
+            const userTypeDisplay = document.getElementById('user-type-display');
+            
+            if(localStorage.getItem('user_type') === 'gerente') {
+                roleTitle.textContent = 'Gerente';
+                userTypeDisplay.textContent = 'Gerente';
+                userTypeDisplay.classList.add('gerente-badge');
+            } else {
+                roleTitle.textContent = 'Funcionário';
+                userTypeDisplay.textContent = 'Funcionário';
+                userTypeDisplay.classList.add('funcionario-badge');
+            }
+
+            // Exibe o nome do usuário
+            const userName = localStorage.getItem('user_name');
+            if (userName) {
+                document.getElementById('user-name-display').textContent = userName;
+            }
+
+            document.getElementById('logout-button').addEventListener('click', () => {
+                redirectToLogin();
+            });
+        });
+    </script>
+</body>
+</html>

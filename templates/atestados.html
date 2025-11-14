@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <!-- Define a codificação de caracteres para suportar caracteres especiais -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Garante que a página se ajuste corretamente em dispositivos móveis -->
+    <title>Enviar Atestado - Sistema de RH</title>
+    <!-- Importa o arquivo CSS principal -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Define o favicon, com número aleatório para evitar cache -->
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}?v={{ range(1, 1000) | random }}" type="image/x-icon">
+</head>
+<body>
+    <!-- Cabeçalho e navegação -->
+    <header>
+        <nav>
+            <h1>Enviar Atestados</h1>
+            <ul class="nav-links"> <li><a href="/dashboard-page">Home</a></li>
+                <li>
+                    <img src="/static/images/logo TCC branca.png" alt="Logo da Empresa" class="header-logo">
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Conteúdo principal -->
+    <main class="container">
+        <h2>Formulário de Envio de Atestado</h2>
+        <!-- Área para exibição de mensagens -->
+        <div id="message-area" class="alert" style="display: none;"></div>
+
+        <!-- Formulário para envio de atestado -->
+        <form id="atestado-form" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="motivo">Motivo do Atestado:</label>
+                <!-- Campo para inserir o motivo do atestado -->
+                <input type="text" id="motivo" name="motivo" required placeholder="Ex: Atestado médico, declaração de comparecimento">
+            </div>
+            <div class="form-group">
+                <label for="file">Anexar Arquivo (PDF, PNG, JPG, JPEG):</label>
+                <!-- Campo para selecionar arquivo do atestado -->
+                <input type="file" id="file" name="file" accept=".pdf,.png,.jpg,.jpeg" required>
+            </div>
+            <button type="submit">Enviar Atestado</button> <!-- Botão para enviar -->
+        </form>
+
+        <hr>
+
+        <!-- Seção para listar atestados já enviados -->
+        <h2>Meus Atestados Enviados</h2>
+        <table id="my-atestados-table">
+            <thead>
+                <tr>
+                    <th>Motivo</th>
+                    <th>Arquivo</th>
+                    <th>Data de Envio</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Linhas com os atestados serão carregadas via JavaScript -->
+            </tbody>
+        </table>
+    </main>
+
+    <!-- Importa o script principal -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script> 
+    <script>
+        // Executa quando a página estiver carregada
+        document.addEventListener('DOMContentLoaded', () => {
+            // Verifica se o usuário é do tipo "funcionario" para acessar a página
+            checkUserRole(['funcionario']);
+
+            // Seleciona os elementos principais do DOM
+            const atestadoForm = document.getElementById('atestado-form'); // Formulário
+            const myAtestadosTableBody = document.querySelector('#my-atestados-table tbody'); // Corpo da tabela
+
+            /**
+             * Função para carregar os atestados enviados pelo usuário
+             */
+            async function loadMyAtestados() {
+                // Exibe mensagem de carregamento
+                myAtestadosTableBody.innerHTML = '<tr><td colspan="4">Carregando...</td></tr>'; // Mensagem de carregamento
+                try {
+                    // Faz a requisição para obter os atestados do usuário
+                    const response = await fetch('/api/meus-atestados', {
+                        method: 'GET',
+                        headers: getAuthHeaders() // Cabeçalhos com token de autenticação
+                    });
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        // Limpa a tabela antes de inserir novos dados
+                        myAtestadosTableBody.innerHTML = '';
+                        if (data.length > 0) {
+                            // Preenche a tabela com os atestados
+                            data.forEach(atestado => {
+                                const row = myAtestadosTableBody.insertRow();
+                                row.insertCell().textContent = atestado.motivo; // Motivo
+                                
+                                // Cria link para o arquivo anexado
+                                const fileLink = document.createElement('a'); // Link para o arquivo
+                                fileLink.href = `/static/uploads/${atestado.arquivo}`; // URL do arquivo
+                                fileLink.textContent = atestado.arquivo; // Nome do arquivo
+                                fileLink.target = '_blank';
+                                row.insertCell().appendChild(fileLink); // Adiciona o link à célula
+
+                                row.insertCell().textContent = new Date(atestado.criado_em).toLocaleString(); // Data
+                                row.insertCell().textContent = atestado.status; // Status
+                            });
+                        } else {
+                            // Caso não haja atestados enviados
+                            myAtestadosTableBody.innerHTML = '<tr><td colspan="4">Nenhum atestado enviado ainda.</td></tr>'; // Mensagem de nenhum atestado
+                        }
+                    } else {
+                        // Exibe mensagem de erro caso a requisição falhe
+                        showMessage(data.message || 'Erro ao carregar meus atestados.', 'danger');
+                        myAtestadosTableBody.innerHTML = `<tr><td colspan="4">${data.message || 'Erro.'}</td></tr>`; // Mensagem de erro na tabela
+                    }
+                } catch (error) {
+                    console.error('Erro ao carregar meus atestados:', error);
+                    showMessage('Erro de conexão ao carregar meus atestados.', 'danger');
+                    myAtestadosTableBody.innerHTML = `<tr><td colspan="4">Erro de conexão.</td></tr>`; // Mensagem de erro na tabela
+                }
+            }
+
+            /**
+             * Evento para submissão do formulário de envio de atestado
+             */
+            atestadoForm.addEventListener('submit', async (e) => {
+                e.preventDefault(); // Impede recarregamento da página
+
+                // Obtém os dados do formulário
+                const motivo = document.getElementById('motivo').value; // Motivo do atestado
+                const fileInput = document.getElementById('file');
+                const formData = new FormData();
+
+                if (fileInput.files.length > 0) {
+                    // Adiciona os dados ao objeto FormData
+                    formData.append('file', fileInput.files[0]); // Arquivo do atestado
+                    formData.append('motivo', motivo);
+                } else {
+                    showMessage('Selecione um arquivo para o atestado.', 'warning'); // Mensagem de aviso se nenhum arquivo for selecionado
+                    return;
+                }
+
+                try {
+                    // Faz a requisição para enviar o atestado
+                    const response = await fetch('/api/atestado', { // Endpoint para envio de atestado
+                        method: 'POST',
+                        headers: {
+                            'Authorization': getAuthHeaders()['Authorization'] // Token de autenticação
+                        },
+                        body: formData // Dados do formulário
+                    });
+                    const data = await response.json(); // Resposta do servidor
+
+                    if (response.ok) {
+                        // Sucesso no envio
+                        showMessage(data.message, 'success');
+                        atestadoForm.reset(); // Limpa o formulário
+                        loadMyAtestados(); // Atualiza a lista de atestados
+                    } else {
+                        showMessage(data.message || 'Erro ao enviar atestado.', 'danger'); // Mensagem de erro
+                    }
+                } catch (error) {
+                    console.error('Erro ao enviar atestado:', error);
+                    showMessage('Erro de conexão ao enviar atestado.', 'danger'); // Mensagem de erro de conexão
+                }
+            });
+
+            // Carrega os atestados assim que a página é aberta
+            loadMyAtestados(); // Chama a função para carregar os atestados do usuário
+        });
+    </script>
+</body>
+</html>

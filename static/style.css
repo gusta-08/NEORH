@@ -1,0 +1,1362 @@
+/* Variáveis de cores */
+:root {
+  --navy-blue: #0a192f; /* Cor primária */
+  --navy-blue-light: #112240; /* Cor secundária */
+  --navy-blue-lighter: #233554; /* Cor terciária */
+  --white: #ffffff; /* Cor de fundo */
+  --light-gray: #f8f9fa; /* Cor de fundo */
+  --medium-gray: #e9ecef; /* Cor de fundo */
+  --dark-gray: #6c757d; /* Cor de texto */
+  --text-dark: #343a40; /* Cor de texto */
+  --success: #28a745; /* Cor de sucesso */
+  --danger: #dc3545; /* Cor de erro */
+  --warning: #ffc107; /* Cor de aviso */
+  --info: #17a2b8; /* Cor de informação */
+  --shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra */
+  --shadow-hover: 0 8px 15px rgba(0, 0, 0, 0.15); /* Sombra ao passar o mouse */
+}
+
+/* Reset e estilos base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+/* Estilos base */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--light-gray);
+  color: var(--text-dark);
+  line-height: 1.6;
+}
+
+/* Header e Navegação */
+header {
+  background-color: var(--navy-blue);
+  color: var(--white);
+  padding: 0;
+  box-shadow: var(--shadow);
+}
+
+/* Estilo para o header com logo à direita */
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+/* Container da logo */
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    order: 2; /* Coloca a logo à direita (segunda na ordem) */
+}
+/* Estilo para as informações do usuário */
+.user-info {
+    text-align: left;
+    order: 1; /* Coloca as informações do usuário à esquerda (primeira na ordem) */
+    flex: 1; /* Permite que ocupe o espaço disponível */
+}
+/* Estilo para a imagem da logo */
+.site-logo {
+    height: 100px;
+    width: auto;
+    max-width: 150px;
+    object-fit: contain;
+}
+/* Estilo para o texto da logo */
+.logo-text {
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--white);
+    display: none; /* Oculta o texto quando a logo está visível */
+}
+
+/* Quando a logo não carrega, mostra o texto */
+.logo-container:has(img[src*="logo"]:not([src=""])) .logo-text {
+    display: none;
+}
+/* Quando a logo não carrega, mostra o texto */
+.logo-container:not(:has(img[src*="logo"]:not([src=""]))) .logo-text {
+    display: block;
+}
+
+/* Ajustes para o dashboard header */
+.dashboard-header {
+    display: flex;
+    align-items: center;
+    background-color: var(--navy-blue);
+    color: var(--white);
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow);
+}
+
+/* Ajuste para o texto do usuário no header azul */
+.dashboard-header h1 {
+    color: var(--white);
+    margin-bottom: 0.5rem;
+}
+/* Ajuste no dashboard header */
+.dashboard-header p {
+    margin: 0;
+    color: var(--white);
+}
+/* Ajuste no dashboard header */
+.dashboard-header strong {
+    font-weight: 600;
+}
+
+/* Responsividade para o header */
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    /* Centraliza a logo e o texto do usuário */
+    .user-info {
+        text-align: center;
+        width: 100%;
+        order: 1;
+    }
+    
+    .logo-container {
+        order: 2;
+        justify-content: center;
+    }
+    
+    .site-logo {
+        height: 40px;
+    }
+}
+
+/* Estilo para o texto do tipo de usuário */
+.user-type-text {
+    color: var(--white) !important;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    display: inline-block;
+    background-color: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Badge para gerente */
+.gerente-badge {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Badge para funcionário */
+.funcionario-badge {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Estilo para o texto do tipo de usuário */
+.user-type-text {
+    color: var(--navy-blue) !important;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    display: inline-block;
+}
+
+/* Badge para gerente */
+.gerente-badge {
+    background-color: rgba(10, 25, 47, 0.1);
+    border: 1px solid var(--navy-blue);
+}
+
+/* Badge para funcionário */
+.funcionario-badge {
+    background-color: rgba(108, 117, 125, 0.1);
+    border: 1px solid var(--dark-gray);
+    color: var(--dark-gray) !important;
+}
+
+/* Ajuste no dashboard header */
+.dashboard-header p {
+    margin: 0.5rem 0;
+    color: var(--text-dark);
+}
+/* Ajuste no dashboard header */
+.dashboard-header strong {
+    font-weight: 600;
+}
+
+/* Header e Navegação */
+header nav {
+    display: flex; /* Usa Flexbox para alinhamento */
+    justify-content: space-between; /* Alinha o h1 à esquerda e a UL à direita */
+    align-items: center; /* Centraliza verticalmente os itens */
+    padding: 1rem 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+/* Estilo para o título do site */
+header nav h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+/* Estilo para a lista de links (botões) */
+header nav ul {
+    display: flex;
+    list-style: none;
+    gap: 1rem; /* Adiciona espaçamento entre os itens */
+    align-items: center; /* Garante que os itens da lista estejam alinhados */
+    margin: 0;
+    padding: 0;
+}
+
+/* Estilo para os links da navegação*/
+header nav ul li a {
+    color: var(--white);
+    background-color: var(--navy-blue-light); /* Adiciona um fundo */
+    text-decoration: none;
+    font-weight: 500;
+    padding: 0.6rem 1.2rem; /* Aumenta o preenchimento para parecer um botão */
+    border-radius: 6px; /* Adiciona cantos arredondados */
+    transition: all 0.3s ease; /* Transição para todos os efeitos */
+    border: 1px solid transparent; /* Adiciona uma borda transparente para o efeito de hover */
+}
+
+header nav ul li a:hover {
+    background-color: var(--navy-blue); /* Escurece o fundo ao passar o mouse */
+    border-color: var(--white); /* Adiciona uma borda branca para destaque */
+    transform: translateY(-2px); /* Efeito de elevação sutil */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Sombra para profundidade */
+}
+
+.header-logo {
+    height: 40px; /* Define a altura da logo. Ajuste conforme necessário */
+    width: auto;
+    margin-left: 10px; /* Adiciona um pequeno espaço entre o botão Home e a logo */
+}
+
+/* Responsividade para a navegação */
+@media (max-width: 768px) {
+    header nav {
+        flex-direction: column; /* Em telas menores, os itens ficam um embaixo do outro */
+        gap: 1rem;
+        padding: 1rem;
+    }
+    
+    header nav ul {
+        flex-direction: row; /* Mantém os botões lado a lado */
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.75rem;
+    }
+    
+    .header-logo {
+        height: 35px; /* Reduz o tamanho da logo em telas menores */
+    }
+}
+
+
+
+/* Container principal */
+.container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1.5rem;
+}
+
+/* Cards e seções */
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: var(--light-gray);
+}
+/* Estilo para o card de autenticação */
+.auth-card {
+  background-color: var(--white);
+  padding: 2.5rem;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  width: 100%;
+  max-width: 450px;
+}
+/* Estilo para o título do card de autenticação */
+.auth-title {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: var(--navy-blue);
+  font-size: 1.8rem;
+}
+/* Container do dashboard */
+.dashboard-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+/* Estilo para o header do dashboard */
+.dashboard-header {
+  background-color: var(--white);
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow);
+}
+/* Estilo para o título do dashboard */
+.dashboard-header h1 {
+  color: var(--navy-blue);
+  margin-bottom: 0.5rem;
+}
+
+/* Ícones para os cards */
+.card-icon {
+    text-align: center;
+    margin-bottom: 1rem;
+    color: var(--navy-blue);
+    font-size: 2.5rem;
+}
+/* Efeito hover para os ícones dos cards */
+.action-card:hover .card-icon {
+    color: var(--navy-blue-light);
+    transform: scale(1.1);
+    transition: transform 0.3s ease;
+}
+
+/* Ajustes para os cards com ícones */
+.action-card {
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+/* Efeito de linha superior ao passar o mouse */
+.action-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background-color: var(--navy-blue);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+}
+/* Efeito de linha superior ao passar o mouse */
+.action-card:hover::before {
+    transform: scaleX(1);
+}
+
+/* Melhorias de responsividade para cards com ícones */
+@media (max-width: 768px) {
+    .card-icon {
+        font-size: 2rem;
+    }
+    
+    .action-card {
+        padding: 1.25rem;
+    }
+}
+/* Seções de usuário e comuns */
+.user-section, .common-section {
+  background-color: var(--white);
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow);
+}
+/* Títulos das seções */
+.user-section h2, .common-section h2 {
+  color: var(--navy-blue);
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--medium-gray);
+}
+/* Cards de ações */
+.action-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+/* Estilo para cada card de ação */
+.action-card {
+  background-color: var(--white);
+  border: 1px solid var(--medium-gray);
+  border-radius: 8px;
+  padding: 1.5rem;
+  transition: transform 0.3s, box-shadow 0.3s;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+/* Efeito hover para os cards de ação */
+.action-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-hover);
+  border-color: var(--navy-blue-light);
+}
+/* Título e descrição dos cards */
+.action-card h3 {
+  color: var(--navy-blue);
+  margin-bottom: 0.75rem;
+  font-size: 1.25rem;
+}
+/* Descrição dos cards */
+.action-card p {
+  color: var(--dark-gray);
+  margin-bottom: 1.25rem;
+  flex-grow: 1;
+}
+/* Botão dentro dos cards */
+.card-button {
+  display: inline-block;
+  background-color: var(--navy-blue);
+  color: var(--white);
+  padding: 0.6rem 1.25rem;
+  text-decoration: none;
+  border-radius: 4px;
+  font-weight: 500;
+  transition: background-color 0.3s;
+  text-align: center;
+}
+/* Efeito hover para o botão dos cards */
+.card-button:hover {
+  background-color: var(--navy-blue-light);
+}
+/* Footer do dashboard */
+.dashboard-footer {
+  text-align: center;
+  margin-top: 2rem;
+}
+/* Botão de logout */
+.logout-button {
+  display: inline-block;
+  background-color: var(--danger);
+  color: var(--white);
+  padding: 0.75rem 1.5rem;
+  text-decoration: none;
+  border-radius: 4px;
+  font-weight: 500;
+  transition: background-color 0.3s;
+}
+/* Efeito hover para o botão de logout */
+.logout-button:hover {
+  background-color: #bd2130;
+}
+
+/* Formulários */
+.auth-form, .form-section {
+  margin-top: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1.25rem;
+}
+/* Estilo para os labels dos formulários */
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--navy-blue);
+}
+/* Estilo para os inputs, selects e textareas dos formulários */
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--medium-gray);
+  border-radius: 4px;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+}
+/* Efeito de foco para os inputs, selects e textareas dos formulários */
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--navy-blue);
+  box-shadow: 0 0 0 3px rgba(10, 25, 47, 0.1);
+}
+/* Estilo para os botões de autenticação e envio */
+.auth-button, button[type="submit"] {
+  width: 100%;
+  background-color: var(--navy-blue);
+  color: var(--white);
+  border: none;
+  padding: 0.75rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+/* Efeito hover para os botões de autenticação e envio */
+.auth-button:hover, button[type="submit"]:hover {
+  background-color: var(--navy-blue-light);
+}
+/* Footer dos formulários de autenticação */
+.auth-footer {
+  text-align: center;
+  margin-top: 1.5rem;
+}
+/* Estilo para os links no footer dos formulários */
+.auth-footer a {
+  color: var(--navy-blue);
+  text-decoration: none;
+  font-weight: 500;
+}
+/* Efeito hover para os links no footer dos formulários */
+.auth-footer a:hover {
+  text-decoration: underline;
+}
+
+/* Tabelas */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  background-color: var(--white);
+  box-shadow: var(--shadow);
+  border-radius: 8px;
+  overflow: hidden;
+}
+/* Estilo para as células da tabela */
+th, td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--medium-gray);
+}
+/* Estilo para o cabeçalho da tabela */
+th {
+  background-color: var(--navy-blue);
+  color: var(--white);
+  font-weight: 600;
+}
+/* Remove a borda inferior da última linha da tabela */
+tr:last-child td {
+  border-bottom: none;
+}
+/* Efeito hover para as linhas da tabela */
+tr:hover {
+  background-color: rgba(10, 25, 47, 0.03);
+}
+
+/* Alertas e mensagens */
+.alert {
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+  border-radius: 4px;
+  font-weight: 500;
+}
+/* Estilos para diferentes tipos de alertas */
+.alert.success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+/* Estilos para diferentes tipos de alertas */
+.alert.danger {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+/* Estilos para diferentes tipos de alertas */
+.alert.warning {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+}
+
+/* Botões de ação */
+.action-button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  margin-right: 0.5rem;
+}
+/* Estilos para diferentes tipos de botões de ação */
+.edit-button {
+  background-color: var(--info);
+  color: var(--white);
+}
+
+.edit-button:hover {
+  background-color: #138496;
+}
+
+.delete-button {
+  background-color: var(--danger);
+  color: var(--white);
+}
+
+.delete-button:hover {
+  background-color: #bd2130;
+}
+
+.view-points-button {
+  background-color: var(--navy-blue);
+  color: var(--white);
+}
+
+.view-points-button:hover {
+  background-color: var(--navy-blue-light);
+}
+
+.approve-button {
+  background-color: var(--success);
+  color: var(--white);
+}
+
+.approve-button:hover {
+  background-color: #218838;
+}
+
+.reject-button {
+  background-color: var(--danger);
+  color: var(--white);
+}
+
+.reject-button:hover {
+  background-color: #bd2130;
+}
+
+/* Modal */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  overflow: auto;
+}
+/* Conteúdo do modal */
+.modal-content {
+  background-color: var(--white);
+  margin: 5% auto;
+  padding: 2rem;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 600px;
+  box-shadow: var(--shadow-hover);
+  position: relative;
+}
+/* Botão de fechar do modal */
+.close-button {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  font-size: 1.5rem;
+  font-weight: bold;
+  cursor: pointer;
+  color: var(--dark-gray);
+}
+/* Efeito hover para o botão de fechar do modal */
+.close-button:hover {
+  color: var(--text-dark);
+}
+
+/* Calendário */
+.calendar-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  background-color: var(--white);
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+/* Título do calendário */
+.calendar-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--navy-blue);
+}
+/* Navegação do calendário */
+.calendar-nav button {
+  background-color: var(--navy-blue);
+  color: var(--white);
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+/* Efeito hover para os botões de navegação do calendário */
+.calendar-nav button:hover {
+  background-color: var(--navy-blue-light);
+}
+/* Estilo para a tabela do calendário */
+.calendar {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: var(--white);
+  box-shadow: var(--shadow);
+  border-radius: 8px;
+  overflow: hidden;
+}
+/* Estilo para o cabeçalho do calendário */
+.calendar th {
+  background-color: var(--navy-blue);
+  color: var(--white);
+  padding: 1rem;
+  text-align: center;
+}
+/* Estilo para as células do calendário */
+.calendar td {
+  border: 1px solid var(--medium-gray);
+  padding: 0.75rem;
+  height: 100px;
+  vertical-align: top;
+  position: relative;
+}
+/* Estilo para o número do dia */
+.day-number {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  color: var(--navy-blue);
+}
+/* Estilo para as informações do ponto */
+.ponto-info {
+  font-size: 0.8rem;
+  margin: 0.15rem 0;
+  padding: 0.3rem;
+  background-color: rgba(10, 25, 47, 0.05);
+  border-radius: 3px;
+  line-height: 1.3;
+}
+/* Destaque para o dia atual */
+.current-day {
+  background-color: rgba(10, 25, 47, 0.05);
+}
+/* Destaque para fins de semana */
+.weekend {
+  background-color: rgba(108, 117, 125, 0.05);
+}
+/* Ações do ponto */
+.ponto-actions {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+/* Botões de ação do ponto */
+.ponto-actions button {
+  margin: 0 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background-color: var(--navy-blue);
+  color: var(--white);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  font-weight: 500;
+}
+/* Efeito hover para os botões de ação do ponto */
+.ponto-actions button:hover {
+  background-color: var(--navy-blue-light);
+}
+
+/* Seções de relatório */
+.report-section {
+  background-color: var(--white);
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow);
+}
+/* Título das seções de relatório */
+.report-section h3 {
+  color: var(--navy-blue);
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--medium-gray);
+}
+/* Botão para gerar relatório */
+.report-section button {
+  margin-top: 1rem;
+  padding: 0.75rem 1.5rem;
+  background-color: var(--navy-blue);
+  color: var(--white);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  font-weight: 500;
+}
+/* Efeito hover para o botão de gerar relatório */
+.report-section button:hover {
+  background-color: var(--navy-blue-light);
+}
+
+/* Imagens de perfil */
+.profile-picture {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--medium-gray);
+}
+/* Imagem de perfil pequena */
+.profile-pic-small {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--medium-gray);
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  nav {
+    flex-direction: column;
+    padding: 1rem;
+  }
+  
+  nav ul {
+    margin-top: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+  }
+  
+  .action-cards {
+    grid-template-columns: 1fr;
+  }
+  
+  .calendar-controls {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .calendar-nav {
+    display: flex;
+    gap: 0.5rem;
+  }
+  
+  .ponto-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .ponto-actions button {
+    margin: 0;
+  }
+  
+  .modal-content {
+    width: 95%;
+    margin: 10% auto;
+    padding: 1.5rem;
+  }
+}
+
+/* Utilitários */
+.hidden {
+  display: none;
+}
+/* Centraliza o texto */
+.text-center {
+  text-align: center;
+}
+/* Alinha o texto à direita */
+.mb-1 {
+  margin-bottom: 0.5rem;
+}
+/* Margem inferior de 1rem */
+.mb-2 {
+  margin-bottom: 1rem;
+}
+/* Margem superior de 0.5rem */
+.mt-1 {
+  margin-top: 0.5rem;
+}
+/* Margem superior de 1rem */
+.mt-2 {
+  margin-top: 1rem;
+}
+
+/* Estilos para a página de contabilidade */
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+/* Cartões de informação */
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+/* Estilo para cada item de informação */
+.info-item {
+    background: rgba(10, 25, 47, 0.05);
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+}
+/* Estilo para o label da informação */
+.info-label {
+    font-size: 0.8rem;
+    color: var(--dark-gray);
+    margin-bottom: 0.5rem;
+}
+/* Estilo para o valor da informação */
+.info-value {
+    font-weight: bold;
+    color: var(--navy-blue);
+    font-size: 1.1rem;
+}
+/* Valores principais */
+.valores-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin: 1rem 0;
+}
+/* Estilo para cada item de valor */
+.valor-item {
+    padding: 0.75rem;
+    border-radius: 6px;
+    text-align: center;
+}
+/* Estilo para valores positivos e negativos */
+.valor-item.positivo {
+    background: rgba(40, 167, 69, 0.1);
+    border: 1px solid rgba(40, 167, 69, 0.2);
+}
+/* Estilo para valores positivos e negativos */
+.valor-item.negativo {
+    background: rgba(220, 53, 69, 0.1);
+    border: 1px solid rgba(220, 53, 69, 0.2);
+}
+/* Estilo para o label do valor */
+.valor-destaque {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--navy-blue);
+    margin: 0.5rem 0;
+}
+/* Estilo para informações adicionais */
+.info-small {
+    font-size: 0.8rem;
+    color: var(--dark-gray);
+    margin-top: 0.25rem;
+}
+
+/* Tabelas */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+/* Estilo para as células da tabela */
+.data-table th,
+.data-table td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--medium-gray);
+}
+/* Estilo para o cabeçalho da tabela */
+.data-table th {
+    background: var(--navy-blue);
+    color: white;
+    font-weight: 600;
+}
+/* Remove a borda inferior da última linha da tabela */
+.data-table tr:hover {
+    background: rgba(10, 25, 47, 0.02);
+}
+
+/* Status badges */
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+/* Estilos para diferentes status */
+.status-badge.pago {
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+    border: 1px solid rgba(40, 167, 69, 0.2);
+}
+/* Estilos para diferentes status */
+.status-badge.pendente {
+    background: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+    border: 1px solid rgba(255, 193, 7, 0.2);
+}
+/* Estilos para diferentes status */
+.status-badge.atrasado {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+    border: 1px solid rgba(220, 53, 69, 0.2);
+}
+
+/* Benefícios */
+.beneficios-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+/* Estilo para cada item de benefício */
+.beneficio-item {
+    padding: 1.5rem;
+    border: 1px solid var(--medium-gray);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+/* Efeito hover para os itens de benefício */
+.beneficio-item:hover {
+    border-color: var(--navy-blue);
+    box-shadow: var(--shadow);
+}
+/* Cabeçalho do benefício */
+.beneficio-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+/* Ícone do benefício */
+.beneficio-header h4 {
+    margin: 0;
+    color: var(--navy-blue);
+}
+/* Título do benefício */
+.beneficio-desc {
+    color: var(--dark-gray);
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+/* Valor do benefício */
+.beneficio-valor {
+    font-weight: 600;
+    color: var(--navy-blue);
+}
+
+/* Formulários */
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+/* Ações do formulário */
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--medium-gray);
+}
+
+/* Botões */
+.btn-primary {
+    background: var(--navy-blue);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.3s ease;
+}
+/* Efeito hover para o botão primário */
+.btn-primary:hover {
+    background: var(--navy-blue-light);
+}
+/* Botão secundário */
+.btn-success {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.3s ease;
+}
+/* Efeito hover para o botão de sucesso */
+.btn-success:hover {
+    background: #218838;
+}
+/* Botão secundário */
+.btn-secondary {
+    background: var(--dark-gray);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.3s ease;
+}
+/* Efeito hover para o botão secundário */
+.btn-secondary:hover {
+    background: #5a6268;
+}
+/* Botão de informação */
+.btn-info {
+    background: #17a2b8;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.3s ease;
+}
+/* Efeito hover para o botão de informação */
+.btn-info:hover {
+    background: #138496;
+}
+/* Botão de perigo */
+.btn-icon {
+    background: none;
+    border: none;
+    color: var(--navy-blue);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 4px;
+    transition: background 0.3s ease;
+}
+/* Efeito hover para o botão de ícone */
+.btn-icon:hover {
+    background: rgba(10, 25, 47, 0.1);
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .grid-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .valores-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .beneficios-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .header-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
+
+/* Seção de contato */
+.contact-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+/* Botões de contato */
+.contact-buttons {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+/* Estilo para os botões de contato */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+/* Ações no header */
+.header-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+/* Estilo para selects */
+.form-select {
+    padding: 0.5rem;
+    border: 1px solid var(--medium-gray);
+    border-radius: 4px;
+    background: white;
+}
+/* Estilo para selects no modo escuro */
+.table-responsive {
+    overflow-x: auto;
+}
+/* Estilo para tabelas responsivas */
+.holerite-detalhado {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+/* Estilo para o header do holerite */
+.holerite-header {
+    text-align: center;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #004085;
+    padding-bottom: 10px;
+}
+/* Estilo para o título do holerite */
+.holerite-dados {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+/* Estilo para os dados do funcionário */
+.holerite-tabela {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+}
+/* Estilo para a tabela do holerite */
+.holerite-tabela th,
+.holerite-tabela td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+/* Estilo para o cabeçalho da tabela */
+.holerite-tabela th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+}
+/* Estilo para as linhas de totais */
+.total-row, .liquido-row {
+    background-color: #e9ecef;
+    font-weight: bold;
+}
+/* Estilo para valores positivos e negativos */
+.valor-positivo {
+    color: #28a745;
+    font-weight: bold;
+}
+/* Estilo para valores positivos e negativos */
+.valor-negativo {
+    color: #dc3545;
+    font-weight: bold;
+}
+/* Estilo para informações adicionais */
+.holerite-informacoes {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    margin: 15px 0;
+}
+/* Estilo para observações */
+.holerite-observacoes {
+    margin: 15px 0;
+    font-size: 0.9em;
+}
+/* Estilo para a assinatura */
+.holerite-assinatura {
+    text-align: center;
+    margin: 30px 0;
+}
+/* Estilo para os botões de ação */
+.holerite-acoes {
+    text-align: center;
+    margin-top: 20px;
+}
+
+/* ======= Ajustes responsivos adicionais para a página de Relatórios ======= */
+/* Garante scroll suave e comportamento adequado para tabelas em telas pequenas */
+.table-responsive {
+  -webkit-overflow-scrolling: touch;
+  overflow-x: auto;
+}
+.table-responsive table {
+  min-width: 700px; /* permite colunas suficientes sem quebrar layout em telas pequenas */
+}
+
+/* Regras para dispositivos médios (tablet / small desktop) */
+@media (max-width: 992px) {
+  .report-section {
+    padding: 1rem;
+  }
+  /* Tornar botões e ações fáceis de tocar em telas menores */
+  .report-section button,
+  .action-button,
+  .ponto-actions button {
+    width: 100%;
+    display: block;
+    margin: 0.4rem 0;
+  }
+  /* Ajustes no calendário para caber melhor */
+  .calendar td {
+    height: auto;
+    min-height: 80px;
+    padding: 0.5rem;
+  }
+  th, td {
+    padding: 0.5rem;
+  }
+  .calendar {
+    font-size: 0.95rem;
+  }
+  /* filtro ocupa toda a largura em telas menores */
+  #filter-employee {
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+}
+
+/* Regras para dispositivos pequenos (mobile) */
+@media (max-width: 576px) {
+  .table-responsive table {
+    min-width: 600px;
+  }
+  .calendar td {
+    min-height: 110px;
+  }
+  .day-number {
+    font-size: 0.95rem;
+  }
+  .ponto-info {
+    font-size: 0.75rem;
+  }
+  header nav h1 {
+    font-size: 1.25rem;
+  }
+  header nav ul li a {
+    padding: 0.45rem 0.8rem;
+  }
+}
+
+/* Small utility: keep table header sticky on wide screens for better UX */
+@media (min-width: 768px) {
+  .table-responsive table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+}

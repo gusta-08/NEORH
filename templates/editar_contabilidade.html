@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Contabilidade - Sistema de RH</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+    <style>
+        .pagamento-item {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .btn-remover {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-remover:hover {
+            background: #c82333;
+        }
+        .holerite-section {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .holerite-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        .holerite-table th, .holerite-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .holerite-table th {
+            background-color: #e9ecef;
+        }
+        .valor-positivo {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .valor-negativo {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .section-title {
+            color: #004085;
+            border-bottom: 2px solid #004085;
+            padding-bottom: 5px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <h1>Gerenciar Contabilidade</h1>
+            <ul class="nav-links">
+                <li><a href="/dashboard-page">Home</a></li>
+                <li>
+                    <img src="/static/images/logo TCC branca.png" alt="Logo da Empresa" class="header-logo">
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container">
+        <div id="message-area" class="alert" style="display: none;"></div>
+
+        <div class="form-section">
+            <h2>Selecionar Funcionário</h2>
+            <div class="form-group">
+                <label for="funcionario-select">Funcionário:</label>
+                <select id="funcionario-select" required>
+                    <option value="">Selecione um funcionário</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="contabilidade-form-container" style="display: none;">
+            <h2>Dados de Contabilidade - <span id="nome-funcionario"></span></h2>
+            
+            <form id="contabilidade-form">
+                <input type="hidden" id="funcionario-id">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="salario-base">Salário Base (R$):</label>
+                        <input type="number" id="salario-base" step="0.01" min="0" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tipo-contrato">Tipo de Contrato:</label>
+                        <select id="tipo-contrato" required>
+                            <option value="CLT">CLT</option>
+                            <option value="PJ">PJ</option>
+                            <option value="Estagiário">Estagiário</option>
+                            <option value="Autônomo">Autônomo</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="banco">Banco:</label>
+                        <input type="text" id="banco" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="admissao">Data de Admissão:</label>
+                        <input type="date" id="admissao" required>
+                    </div>
+                </div>
+
+                <h3>Benefícios</h3>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="plano-saude">Plano de Saúde (R$):</label>
+                        <input type="number" id="plano-saude" step="0.01" min="0" value="0">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="vale-transporte">Vale Transporte (R$):</label>
+                        <input type="number" id="vale-transporte" step="0.01" min="0" value="0">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="vale-refeicao">Vale Refeição (R$):</label>
+                        <input type="number" id="vale-refeicao" step="0.01" min="0" value="0">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="bolsa-educacao">Bolsa Educação (R$):</label>
+                        <input type="number" id="bolsa-educacao" step="0.01" min="0" value="0">
+                    </div>
+                </div>
+
+                <h3 class="section-title">Histórico de Pagamentos (Holerites)</h3>
+                <div id="historico-pagamentos">
+                    <!-- Histórico será gerado dinamicamente -->
+                </div>
+
+                <button type="button" id="adicionar-pagamento" class="btn-secondary">+ Adicionar Holerite</button>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Salvar Dados</button>
+                    <button type="button" id="cancelar-edicao" class="btn-secondary">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        checkUserRole(['gerente']);
+        // Elementos do DOM
+        const funcionarioSelect = document.getElementById('funcionario-select');
+        const formContainer = document.getElementById('contabilidade-form-container');
+        const contabilidadeForm = document.getElementById('contabilidade-form');
+        const nomeFuncionarioSpan = document.getElementById('nome-funcionario');
+        const adicionarPagamentoBtn = document.getElementById('adicionar-pagamento');
+        const historicoContainer = document.getElementById('historico-pagamentos');
+
+        // Carregar lista de funcionários
+        async function carregarFuncionarios() {
+            try {
+                const response = await fetch('/api/gerente/funcionarios', {
+                    method: 'GET',
+                    headers: getAuthHeaders()
+                });
+                if (response.ok) {
+                    const funcionarios = await response.json();
+                    funcionarioSelect.innerHTML = '<option value="">Selecione um funcionário</option>';
+                    funcionarios.forEach(func => {
+                        const option = document.createElement('option');
+                        option.value = func.id;
+                        option.textContent = func.nome;
+                        funcionarioSelect.appendChild(option);
+                    });
+                } else {
+                    showMessage('Erro ao carregar funcionários', 'error');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                showMessage('Erro de conexão', 'error');
+            }
+        }
+
+        // Quando selecionar um funcionário
+        funcionarioSelect.addEventListener('change', async function() {
+            const funcionarioId = this.value;
+            if (!funcionarioId) {
+                formContainer.style.display = 'none';
+                return;
+            }
+            try {
+                const response = await fetch(`/api/funcionarios/${funcionarioId}`, {
+                    method: 'GET',
+                    headers: getAuthHeaders()
+                });
+                if (response.ok) {
+                    const funcionario = await response.json();
+                    nomeFuncionarioSpan.textContent = funcionario.nome;
+                    document.getElementById('funcionario-id').value = funcionario.id;
+                    await carregarDadosContabilidade(funcionarioId);
+                    formContainer.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                showMessage('Erro ao carregar dados do funcionário', 'error');
+            }
+        });
+
+        // Carregar dados de contabilidade
+        async function carregarDadosContabilidade(funcionarioId) {
+            try {
+                const response = await fetch(`/api/contabilidade/${funcionarioId}`, {
+                    method: 'GET',
+                    headers: getAuthHeaders()
+                });
+                if (response.ok) {
+                    const dados = await response.json();
+                    document.getElementById('salario-base').value = Number(dados.salario_base) || 0;
+                    document.getElementById('tipo-contrato').value = dados.tipo_contrato || 'CLT';
+                    document.getElementById('banco').value = dados.banco || '';
+                    document.getElementById('admissao').value = dados.data_admissao || '';
+                    document.getElementById('plano-saude').value = Number(dados.plano_saude) || 0;
+                    document.getElementById('vale-transporte').value = Number(dados.vale_transporte) || 0;
+                    document.getElementById('vale-refeicao').value = Number(dados.vale_refeicao) || 0;
+                    document.getElementById('bolsa-educacao').value = Number(dados.bolsa_educacao) || 0;
+                    carregarHistoricoPagamentos(Array.isArray(dados.historico_pagamentos) ? dados.historico_pagamentos : []);
+                } else {
+                    // Se não houver dados, limpa o formulário
+                    contabilidadeForm.reset();
+                    historicoContainer.innerHTML = '';
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+            }
+        }
+
+        // Carregar histórico de pagamentos
+        function carregarHistoricoPagamentos(historico) {
+            historicoContainer.innerHTML = '';
+            if (!historico || historico.length === 0) {
+                historicoContainer.innerHTML = '<p>Nenhum holerite registrado.</p>';
+                return;
+            }
+            // Gerar campos para cada pagamento
+            historico.forEach((pagamento, index) => {
+                const mes_ano = pagamento.mes_ano || '';
+                const salario_bruto = Number(pagamento.salario_bruto) || 0;
+                const abonos = Number(pagamento.abonos) || 0;
+                const descontos = Number(pagamento.descontos) || 0;
+                const salario_liquido = Number(pagamento.salario_liquido) || (salario_bruto + abonos - descontos);
+                const status = pagamento.status || 'Pago';
+
+                // Campos adicionais para o holerite
+                const comissao = Number(pagamento.comissao) || 0;
+                const inss_valor = Number(pagamento.inss_valor) || 0;
+                const inss_percentual = Number(pagamento.inss_percentual) || 0;
+                const irrf_valor = Number(pagamento.irrf_valor) || 0;
+                const irrf_percentual = Number(pagamento.irrf_percentual) || 0;
+                const fgts_mes = Number(pagamento.fgts_mes) || 0;
+                const base_calc_fgts = Number(pagamento.base_calc_fgts) || 0;
+                const base_calc_inss = Number(pagamento.base_calc_inss) || 0;
+                const base_calc_irrf = Number(pagamento.base_calc_irrf) || 0;
+                const descontos_falta = Number(pagamento.descontos_falta) || 0; 
+                // Criar div do pagamento
+                const pagamentoDiv = document.createElement('div');
+                pagamentoDiv.className = 'pagamento-item';
+                pagamentoDiv.innerHTML = `
+                    <h4>Holerite ${index + 1} - ${mes_ano}</h4>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Mês/Ano:</label>
+                            <input type="month" name="historico[${index}][mes_ano]" value="${mes_ano}" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Salário Base (R$):</label>
+                            <input type="number" name="historico[${index}][salario_bruto]" step="0.01" value="${salario_bruto}" required>
+                        </div>
+                    </div>
+
+                    <h5>Proventos</h5>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Comissão (R$):</label>
+                            <input type="number" name="historico[${index}][comissao]" step="0.01" value="${comissao}">
+                        </div>
+                        <div class="form-group">
+                            <label>Abonos (R$):</label>
+                            <input type="number" name="historico[${index}][abonos]" step="0.01" value="${abonos}">
+                        </div>
+                    </div>
+
+                    <h5>Descontos</h5>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Descontos por Falta (R$):</label>
+                            <input type="number" name="historico[${index}][descontos_falta]" step="0.01" value="${descontos_falta}">
+                        </div>
+                        <div class="form-group">
+                            <label>INSS (%):</label>
+                            <input type="number" name="historico[${index}][inss_percentual]" step="0.01" value="${inss_percentual}" min="0" max="20">
+                        </div>
+                        <div class="form-group">
+                            <label>INSS (R$):</label>
+                            <input type="number" name="historico[${index}][inss_valor]" step="0.01" value="${inss_valor}" readonly>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>IRRF (%):</label>
+                            <input type="number" name="historico[${index}][irrf_percentual]" step="0.01" value="${irrf_percentual}" min="0" max="27.5">
+                        </div>
+                        <div class="form-group">
+                            <label>IRRF (R$):</label>
+                            <input type="number" name="historico[${index}][irrf_valor]" step="0.01" value="${irrf_valor}" readonly>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Descontos por Benefícios (R$):</label>
+                            <input type="number" name="historico[${index}][descontos]" step="0.01" value="${descontos}" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>Salário Líquido (R$):</label>
+                            <input type="number" name="historico[${index}][salario_liquido]" step="0.01" value="${salario_liquido}" readonly>
+                        </div>
+                    </div>
+
+                    <h5>Bases de Cálculo</h5>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Base Cálc. FGTS (R$):</label>
+                            <input type="number" name="historico[${index}][base_calc_fgts]" step="0.01" value="${base_calc_fgts}">
+                        </div>
+                        <div class="form-group">
+                            <label>FGTS do Mês (R$):</label>
+                            <input type="number" name="historico[${index}][fgts_mes]" step="0.01" value="${fgts_mes}" readonly>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Base Cálc. INSS (R$):</label>
+                            <input type="number" name="historico[${index}][base_calc_inss]" step="0.01" value="${base_calc_inss}">
+                        </div>
+                        <div class="form-group">
+                            <label>Base Cálc. IRRF (R$):</label>
+                            <input type="number" name="historico[${index}][base_calc_irrf]" step="0.01" value="${base_calc_irrf}">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Status:</label>
+                            <select name="historico[${index}][status]">
+                                <option value="Pago" ${status === 'Pago' ? 'selected' : ''}>Pago</option>
+                                <option value="Pendente" ${status === 'Pendente' ? 'selected' : ''}>Pendente</option>
+                                <option value="Atrasado" ${status === 'Atrasado' ? 'selected' : ''}>Atrasado</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn-remover" data-index="${index}">Remover Holerite</button>
+                    <hr>
+                `;
+                historicoContainer.appendChild(pagamentoDiv);
+            });
+            
+            // Adiciona eventos para cálculo automático e remoção
+            adicionarEventosPagamentos();
+        }
+
+        // Adicionar novo pagamento
+       adicionarPagamentoBtn.addEventListener('click', function() {
+    const index = document.querySelectorAll('.pagamento-item').length;
+    const pagamentoDiv = document.createElement('div');
+    pagamentoDiv.className = 'pagamento-item';
+    pagamentoDiv.innerHTML = `
+        <h4>Novo Holerite</h4>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label>Mês/Ano:</label>
+                <input type="month" name="historico[${index}][mes_ano]" required>
+            </div>
+            <div class="form-group">
+                <label>Salário Base (R$):</label>
+                <input type="number" name="historico[${index}][salario_bruto]" step="0.01" value="0" required>
+            </div>
+        </div>
+
+        <h5>Proventos</h5>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Comissão (R$):</label>
+                <input type="number" name="historico[${index}][comissao]" step="0.01" value="0">
+            </div>
+            <div class="form-group">
+                <label>Abonos (R$):</label>
+                <input type="number" name="historico[${index}][abonos]" step="0.01" value="0">
+            </div>
+        </div>
+
+        <h5>Descontos</h5>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Descontos por Falta (R$):</label>
+                <input type="number" name="historico[${index}][descontos_falta]" step="0.01" value="0">
+            </div>
+            <div class="form-group">
+                <label>INSS (%):</label>
+                <input type="number" name="historico[${index}][inss_percentual]" step="0.01" value="0" min="0" max="20">
+            </div>
+            <div class="form-group">
+                <label>INSS (R$):</label>
+                <input type="number" name="historico[${index}][inss_valor]" step="0.01" value="0" readonly>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>IRRF (%):</label>
+                <input type="number" name="historico[${index}][irrf_percentual]" step="0.01" value="0" min="0" max="27.5">
+            </div>
+            <div class="form-group">
+                <label>IRRF (R$):</label>
+                <input type="number" name="historico[${index}][irrf_valor]" step="0.01" value="0" readonly>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Descontos por Benefícios (R$):</label>
+                <input type="number" name="historico[${index}][descontos]" step="0.01" value="0" readonly>
+            </div>
+            <div class="form-group">
+                <label>Salário Líquido (R$):</label>
+                <input type="number" name="historico[${index}][salario_liquido]" step="0.01" value="0" readonly>
+            </div>
+        </div>
+
+        <h5>Bases de Cálculo</h5>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Base Cálc. FGTS (R$):</label>
+                <input type="number" name="historico[${index}][base_calc_fgts]" step="0.01" value="0">
+            </div>
+            <div class="form-group">
+                <label>FGTS do Mês (R$):</label>
+                <input type="number" name="historico[${index}][fgts_mes]" step="0.01" value="0" readonly>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Base Cálc. INSS (R$):</label>
+                <input type="number" name="historico[${index}][base_calc_inss]" step="0.01" value="0">
+            </div>
+            <div class="form-group">
+                <label>Base Cálc. IRRF (R$):</label>
+                <input type="number" name="historico[${index}][base_calc_irrf]" step="0.01" value="0">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Status:</label>
+                <select name="historico[${index}][status]">
+                    <option value="Pago">Pago</option>
+                    <option value="Pendente">Pendente</option>
+                    <option value="Atrasado">Atrasado</option>
+                </select>
+            </div>
+        </div>
+
+        <button type="button" class="btn-remover" data-index="${index}">Remover Holerite</button>
+        <hr>
+    `;
+    historicoContainer.appendChild(pagamentoDiv);
+    adicionarEventosPagamentos();
+});
+
+        // Adiciona eventos para cálculo automático e remoção de pagamentos
+        function adicionarEventosPagamentos() {
+    document.querySelectorAll('.pagamento-item').forEach(item => {
+        const bruto = item.querySelector('input[name$="[salario_bruto]"]');
+        const comissao = item.querySelector('input[name$="[comissao]"]');
+        const abonos = item.querySelector('input[name$="[abonos]"]');
+        const descontos = item.querySelector('input[name$="[descontos]"]');
+        const descontosFalta = item.querySelector('input[name$="[descontos_falta]"]'); 
+        const inssPercentual = item.querySelector('input[name$="[inss_percentual]"]');
+        const inssValor = item.querySelector('input[name$="[inss_valor]"]');
+        const irrfPercentual = item.querySelector('input[name$="[irrf_percentual]"]');
+        const irrfValor = item.querySelector('input[name$="[irrf_valor]"]');
+        const liquido = item.querySelector('input[name$="[salario_liquido]"]');
+        const baseCalcFgts = item.querySelector('input[name$="[base_calc_fgts]"]');
+        const fgtsMes = item.querySelector('input[name$="[fgts_mes]"]');
+        const baseCalcInss = item.querySelector('input[name$="[base_calc_inss]"]');
+        const baseCalcIrrf = item.querySelector('input[name$="[base_calc_irrf]"]');
+        // Função para calcular holerite
+        function calcularHolerite() {
+            const valBruto = Number(bruto.value) || 0;
+            const valComissao = Number(comissao.value) || 0;
+            const valAbonos = Number(abonos.value) || 0;
+            const valDescontosFalta = Number(descontosFalta.value) || 0; 
+            const valInssPercentual = Number(inssPercentual.value) || 0;
+            const valIrrfPercentual = Number(irrfPercentual.value) || 0;
+
+            // Calcular totais de proventos
+            const totalProventos = valBruto + valComissao + valAbonos;
+            
+            // Calcular INSS
+            const valInss = (totalProventos * valInssPercentual) / 100;
+            inssValor.value = valInss.toFixed(2);
+            
+            // Calcular base IRRF (proventos - INSS)
+            const baseIrrf = Math.max(0, totalProventos - valInss);
+            baseCalcIrrf.value = baseIrrf.toFixed(2);
+            
+            // Calcular IRRF
+            const valIrrf = (baseIrrf * valIrrfPercentual) / 100;
+            irrfValor.value = valIrrf.toFixed(2);
+            
+            // Calcular base FGTS (normalmente igual aos proventos totais)
+            baseCalcFgts.value = totalProventos.toFixed(2);
+            
+            // Calcular FGTS (8% sobre a base)
+            const valFgts = totalProventos * 0.08;
+            fgtsMes.value = valFgts.toFixed(2);
+            
+            // Calcular base INSS (normalmente igual aos proventos totais)
+            baseCalcInss.value = totalProventos.toFixed(2);
+            
+            // Calcular descontos por benefícios (soma dos benefícios do funcionário)
+            const plano_saude = Number(document.getElementById('plano-saude').value) || 0;
+            const vale_transporte = Number(document.getElementById('vale-transporte').value) || 0;
+            const vale_refeicao = Number(document.getElementById('vale-refeicao').value) || 0;
+            const bolsa_educacao = Number(document.getElementById('bolsa-educacao').value) || 0;
+            
+            const descontos_beneficios = plano_saude + vale_transporte + vale_refeicao + bolsa_educacao;
+            descontos.value = descontos_beneficios.toFixed(2);
+            
+            // Calcular salário líquido (agora incluindo descontos por falta)
+            const totalDescontos = descontos_beneficios + valInss + valIrrf + valDescontosFalta;
+            liquido.value = (totalProventos - totalDescontos).toFixed(2);
+        }
+        
+        // Adicionar eventos para todos os campos numéricos
+        const camposCalculo = [bruto, comissao, abonos, descontosFalta, inssPercentual, irrfPercentual];
+        camposCalculo.forEach(campo => {
+            campo.addEventListener('input', calcularHolerite);
+        });
+
+        // Adicionar eventos para os campos de benefícios
+        const camposBeneficios = [
+            document.getElementById('plano-saude'),
+            document.getElementById('vale-transporte'),
+            document.getElementById('vale-refeicao'),
+            document.getElementById('bolsa-educacao')
+        ];
+        // Adicionar eventos para os campos de benefícios
+        camposBeneficios.forEach(campo => {
+            if (campo) {
+                campo.addEventListener('input', calcularHolerite);
+            }
+        });
+
+        // Calcular inicialmente
+        calcularHolerite();
+
+        // Remover pagamento
+        item.querySelector('.btn-remover').addEventListener('click', function() {
+            item.remove();
+        });
+    });
+}
+
+// Adicionar eventos aos campos de benefícios
+function adicionarEventosBeneficios() {
+    const camposBeneficios = [
+        document.getElementById('plano-saude'),
+        document.getElementById('vale-transporte'),
+        document.getElementById('vale-refeicao'),
+        document.getElementById('bolsa-educacao')
+    ];
+    // Adicionar eventos para os campos de benefícios
+    camposBeneficios.forEach(campo => {
+        if (campo) {
+            campo.addEventListener('input', function() {
+                // Recalcular todos os holerites quando os benefícios mudarem
+                document.querySelectorAll('.pagamento-item').forEach(item => {
+                    const calcularBtn = item.querySelector('input[name$="[salario_bruto]"]');
+                    if (calcularBtn) {
+                        calcularBtn.dispatchEvent(new Event('input'));
+                    }
+                });
+            });
+        }
+    });
+}
+
+// Chamar esta função após carregar os dados de contabilidade
+async function carregarDadosContabilidade(funcionarioId) {
+    try {
+        const response = await fetch(`/api/contabilidade/${funcionarioId}`, {
+            method: 'GET',
+            headers: getAuthHeaders()
+        });
+        if (response.ok) {
+            const dados = await response.json();
+            document.getElementById('salario-base').value = Number(dados.salario_base) || 0;
+            document.getElementById('tipo-contrato').value = dados.tipo_contrato || 'CLT';
+            document.getElementById('banco').value = dados.banco || '';
+            document.getElementById('admissao').value = dados.data_admissao || '';
+            document.getElementById('plano-saude').value = Number(dados.plano_saude) || 0;
+            document.getElementById('vale-transporte').value = Number(dados.vale_transporte) || 0;
+            document.getElementById('vale-refeicao').value = Number(dados.vale_refeicao) || 0;
+            document.getElementById('bolsa-educacao').value = Number(dados.bolsa_educacao) || 0;
+            carregarHistoricoPagamentos(Array.isArray(dados.historico_pagamentos) ? dados.historico_pagamentos : []);
+            
+            // Adicionar eventos aos campos de benefícios
+            adicionarEventosBeneficios();
+        } else {
+            // Se não houver dados, limpa o formulário
+            contabilidadeForm.reset();
+            historicoContainer.innerHTML = '';
+            adicionarEventosBeneficios();
+        }
+    } catch (error) {
+        console.error('Erro:', error);
+    }
+}
+
+        // Enviar formulário
+        contabilidadeForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const funcionarioId = document.getElementById('funcionario-id').value;
+            
+            const dados = {
+                salario_base: Number(document.getElementById('salario-base').value) || 0,
+                tipo_contrato: document.getElementById('tipo-contrato').value,
+                banco: document.getElementById('banco').value,
+                data_admissao: document.getElementById('admissao').value,
+                plano_saude: Number(document.getElementById('plano-saude').value) || 0,
+                vale_transporte: Number(document.getElementById('vale-transporte').value) || 0,
+                vale_refeicao: Number(document.getElementById('vale-refeicao').value) || 0,
+                bolsa_educacao: Number(document.getElementById('bolsa-educacao').value) || 0,
+                historico_pagamentos: []
+            };
+
+            // Coletar histórico de pagamentos
+            document.querySelectorAll('.pagamento-item').forEach((item, index) => {
+                dados.historico_pagamentos.push({
+                    mes_ano: item.querySelector(`input[name="historico[${index}][mes_ano]"]`).value || '',
+                    salario_bruto: Number(item.querySelector(`input[name="historico[${index}][salario_bruto]"]`).value) || 0,
+                    comissao: Number(item.querySelector(`input[name="historico[${index}][comissao]"]`).value) || 0,
+                    abonos: Number(item.querySelector(`input[name="historico[${index}][abonos]"]`).value) || 0,
+                    descontos_falta: Number(item.querySelector(`input[name="historico[${index}][descontos_falta]"]`).value) || 0, 
+                    descontos: Number(item.querySelector(`input[name="historico[${index}][descontos]"]`).value) || 0,
+                    inss_percentual: Number(item.querySelector(`input[name="historico[${index}][inss_percentual]"]`).value) || 0,
+                    inss_valor: Number(item.querySelector(`input[name="historico[${index}][inss_valor]"]`).value) || 0,
+                    irrf_percentual: Number(item.querySelector(`input[name="historico[${index}][irrf_percentual]"]`).value) || 0,
+                    irrf_valor: Number(item.querySelector(`input[name="historico[${index}][irrf_valor]"]`).value) || 0,
+                    salario_liquido: Number(item.querySelector(`input[name="historico[${index}][salario_liquido]"]`).value) || 0,
+                    base_calc_fgts: Number(item.querySelector(`input[name="historico[${index}][base_calc_fgts]"]`).value) || 0,
+                    fgts_mes: Number(item.querySelector(`input[name="historico[${index}][fgts_mes]"]`).value) || 0,
+                    base_calc_inss: Number(item.querySelector(`input[name="historico[${index}][base_calc_inss]"]`).value) || 0,
+                    base_calc_irrf: Number(item.querySelector(`input[name="historico[${index}][base_calc_irrf]"]`).value) || 0,
+                    status: item.querySelector(`select[name="historico[${index}][status]"]`).value || 'Pago'
+                });
+            });
+
+            try {
+                const response = await fetch(`/api/contabilidade/${funcionarioId}`, {
+                    method: 'POST',
+                    headers: {
+                        ...getAuthHeaders(),
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(dados)
+                });
+                
+                if (response.ok) {
+                    showMessage('Dados de contabilidade salvos com sucesso!', 'success');
+                } else {
+                    showMessage('Erro ao salvar dados', 'error');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                showMessage('Erro de conexão', 'error');
+            }
+        });
+
+        // Botão cancelar
+        document.getElementById('cancelar-edicao').addEventListener('click', function() {
+            funcionarioSelect.value = '';
+            formContainer.style.display = 'none';
+            contabilidadeForm.reset();
+            historicoContainer.innerHTML = '';
+        });
+
+        // Inicializar
+        carregarFuncionarios();
+    });
+    </script>
+</body>
+</html>

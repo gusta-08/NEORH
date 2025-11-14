@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <!-- Define a codificação de caracteres para suportar acentos -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Ajusta o layout para dispositivos móveis -->
+    <title>Gerenciar Avisos - Sistema de RH</title>
+    <!-- Importa o arquivo CSS principal -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Define o favicon e adiciona número aleatório para evitar cache -->
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}?v={{ range(1, 1000) | random }}" type="image/x-icon">
+    <!-- Importa o script principal -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</head>
+<body>
+    <!-- Cabeçalho e navegação -->
+    <header>
+        <nav>
+            <h1>Gerenciar Avisos</h1>
+            <ul class="nav-links"> <li><a href="/dashboard-page">Home</a></li>
+                <li>
+                    <img src="/static/images/logo TCC branca.png" alt="Logo da Empresa" class="header-logo">
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Conteúdo principal -->
+    <main class="container">
+        <h2>Criar Novo Aviso</h2>
+        <!-- Área para mensagens de feedback -->
+        <div id="message-area" class="alert" style="display: none;"></div>
+        
+        <!-- Formulário para criar novo aviso -->
+        <form id="create-aviso-form">
+            <div class="form-group">
+                <label for="aviso-titulo">Título:</label>
+                <input type="text" id="aviso-titulo" required> <!-- Campo obrigatório -->
+            </div>
+            <div class="form-group">
+                <label for="aviso-mensagem">Mensagem:</label>
+                <textarea id="aviso-mensagem" rows="5" required></textarea> <!-- Campo obrigatório -->
+            </div>
+            <div class="form-group">
+                <label for="destinatarios">Enviar para:</label>
+                <select id="destinatarios" required> <!-- Campo obrigatório -->
+                    <option value="todos">Todos os funcionários</option>
+                    <option value="funcionarios">Somente funcionários</option>
+                    <option value="gerentes">Somente gerentes</option>
+                </select>
+            </div>
+            <button type="submit">Publicar Aviso</button> <!-- Botão para envio -->
+        </form>
+
+        <hr>
+
+        <h2>Avisos Publicados</h2>
+        <!-- Lista dinâmica de avisos publicados -->
+        <div id="published-avisos-list">
+            <p>Carregando avisos...</p>
+        </div>
+        
+    </main>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => { 
+    checkUserRole(['gerente']);
+
+    const createAvisoForm = document.getElementById('create-aviso-form');
+    const publishedAvisosListDiv = document.getElementById('published-avisos-list');
+
+    // Função para carregar avisos publicados
+    async function loadPublishedAvisos() {
+        try {
+            const response = await fetch('/api/avisos', {
+                method: 'GET',
+                headers: getAuthHeaders()
+            });
+            let data;
+            try {
+                data = await response.json();
+            } catch {
+                showMessage('Erro interno ao carregar avisos.', 'danger');
+                return;
+            }
+            
+            publishedAvisosListDiv.innerHTML = '';
+            if (response.ok) {
+                if (data.length > 0) {
+                    data.forEach(aviso => {
+                        const avisoCard = document.createElement('div'); 
+                        avisoCard.className = 'aviso-card';
+                        avisoCard.innerHTML = `
+                            <h3>${aviso.titulo}</h3>
+                            <p>${aviso.mensagem}</p>
+                            <small>Publicado em: ${new Date(aviso.data_envio).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</small>
+                            <br>
+                            <small>Destinatários: ${aviso.destinatarios || 'Todos'}</small>
+                            <button class="btn-excluir-aviso" data-id="${aviso.id}">Excluir</button>
+                        `;
+                        publishedAvisosListDiv.appendChild(avisoCard);
+                    });
+                } else {
+                    publishedAvisosListDiv.innerHTML = '<p>Nenhum aviso publicado ainda.</p>';
+                }
+            } else {
+                showMessage(data.message || 'Erro ao carregar avisos publicados.', 'danger');
+            }
+        } catch (error) { 
+            console.error('Erro ao carregar avisos publicados:', error);
+            showMessage('Erro de conexão ao carregar avisos publicados.', 'danger');
+        }
+    }
+
+    // Delegação de evento para exclusão de aviso
+    publishedAvisosListDiv.addEventListener('click', async (e) => {
+        if (e.target.classList.contains('btn-excluir-aviso')) {
+            const avisoId = e.target.getAttribute('data-id');
+            if (confirm('Tem certeza que deseja excluir este aviso?')) {
+                try {
+                    const response = await fetch(`/api/avisos/${avisoId}`, {
+                        method: 'DELETE',
+                        headers: getAuthHeaders()
+                    });
+                    let data;
+                    try {
+                        data = await response.json();
+                    } catch {
+                        showMessage('Erro interno ao excluir aviso.', 'danger');
+                        return;
+                    }
+                    if (response.ok) {
+                        showMessage(data.message, 'success');
+                        loadPublishedAvisos();
+                    } else {
+                        showMessage(data.message || 'Erro ao excluir aviso.', 'danger');
+                    }
+                } catch (error) {
+                    showMessage('Erro de conexão ao excluir aviso.', 'danger');
+                }
+            }
+        }
+    });
+
+    // Evento de submissão do formulário de aviso
+    createAvisoForm.addEventListener('submit', async (e) => { 
+        e.preventDefault();
+
+        const titulo = document.getElementById('aviso-titulo').value;
+        const mensagem = document.getElementById('aviso-mensagem').value;
+        const destinatarios = document.getElementById('destinatarios').value;
+
+        try {
+            const response = await fetch('/api/avisos', {
+                method: 'POST',
+                headers: {
+                    ...getAuthHeaders(),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ titulo, mensagem, destinatarios })
+            });
+            let data;
+            try {
+                data = await response.json();
+            } catch {
+                showMessage('Erro interno ao publicar aviso.', 'danger');
+                return;
+            }
+
+            if (response.ok) {
+                showMessage(data.message, 'success');
+                createAvisoForm.reset();
+                loadPublishedAvisos();
+            } else {
+                showMessage(data.message || 'Erro ao publicar aviso.', 'danger');
+            }
+        } catch (error) {
+            console.error('Erro ao publicar aviso:', error);
+            showMessage('Erro de conexão ao publicar aviso.', 'danger');
+        }
+    });
+
+    // Carrega os avisos assim que a página abrir
+    loadPublishedAvisos();
+});
+</script>
+</body>
+</html>

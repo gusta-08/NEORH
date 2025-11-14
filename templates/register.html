@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <!-- Configurações básicas de codificação e responsividade -->
+    <meta charset="UTF-8"> <!-- Define o padrão de caracteres para acentos e cedilha -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Ajuste responsivo para dispositivos móveis -->
+    
+    <!-- Título da aba do navegador -->
+    <title>Cadastro - Sistema de RH</title>
+    
+    <!-- Importa o CSS (estilo da página) a partir da pasta "static" -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    
+    <!-- Ícone da aba (favicon) com número aleatório para evitar cache -->
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}?v={{ range(1, 1000) | random }}" type="image/x-icon">
+</head>
+<body>
+    <!-- Container principal da área de autenticação -->
+    <div class="auth-container">
+        <div class="auth-card">
+            
+            <!-- Título da tela -->
+            <h1 class="auth-title">Cadastro</h1>
+            
+            <!-- Área para exibição de mensagens de erro/sucesso -->
+            <div id="message-area" class="alert" style="display: none;"></div>
+            
+            <!-- Formulário de cadastro -->
+            <form id="register-form" class="auth-form">
+                
+                <!-- Campo: Nome Completo -->
+                <div class="form-group">
+                    <label for="name">Nome Completo</label>
+                    <input type="text" id="name" name="name" required placeholder="Digite seu nome completo">
+                </div>
+                
+                <!-- Campo: Email -->
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required placeholder="Digite seu email">
+                </div>
+                
+                <!-- Campo: Senha -->
+                <div class="form-group">
+                    <label for="password">Senha</label>
+                    <input type="password" id="password" name="password" required placeholder="Crie uma senha" minlength="8">
+                </div>
+                
+                <!-- Campo: Confirmação de senha -->
+                <div class="form-group">
+                    <label for="confirm-password">Confirmar Senha</label>
+                    <input type="password" id="confirm-password" name="confirm-password" required placeholder="Confirme sua senha">
+                </div>
+                
+                <!-- Campo: Tipo de usuário (Funcionário ou Gerente) -->
+                <div class="form-group">
+                    <label for="user-type">Tipo de Usuário</label>
+                    <select id="user-type" name="user-type" required>
+                        <option value="funcionario">Funcionário</option>
+                        <option value="gerente">Gerente</option>
+                    </select>
+                </div>
+                
+                <!-- Campo: PIN de gerente (só aparece se o usuário selecionar "Gerente") -->
+                <div class="form-group" id="pin-group" style="display: none;">
+                    <label for="pin">PIN de Gerente</label>
+                    <input type="password" id="pin" name="pin" maxlength="10" placeholder="Digite o PIN de gerente">
+                </div>
+                
+                <!-- Botão de envio do formulário -->
+                <button type="submit" class="auth-button">Cadastrar</button>
+            </form>
+            
+            <!-- Rodapé com link para login -->
+            <div class="auth-footer">
+                <p>Já tem uma conta? <a href="/">Faça login</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Importa o script JS principal -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+
+    <!-- Script adicional para lógica da tela -->
+    <script>
+        // Exibe ou oculta o campo "PIN" dependendo do tipo de usuário selecionado
+        document.getElementById('user-type').addEventListener('change', function() {
+            document.getElementById('pin-group').style.display = this.value === 'gerente' ? 'block' : 'none'; // Mostra o campo PIN se for gerente
+        });
+
+        // Captura o evento de envio do formulário de cadastro
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault(); // Evita que a página recarregue automaticamente
+            
+            // Coleta os dados preenchidos no formulário
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            const userType = document.getElementById('user-type').value;
+            const pin = document.getElementById('pin').value;
+
+            // Validação: senhas devem ser iguais
+            if (password !== confirmPassword) {
+                showMessage('As senhas não coincidem.', 'danger');
+                return;
+            }
+
+            // Validação: se for gerente, precisa do PIN
+            if (userType === 'gerente' && pin.trim() === '') {
+                showMessage('Informe o PIN de gerente.', 'danger');
+                return;
+            }
+
+            try {
+                // Envia os dados ao backend (/register) via requisição AJAX (fetch)
+                const response = await fetch('/register', { // Endpoint de cadastro
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json' // Tipo de conteúdo JSON
+                    },
+                    // Dados enviados em formato JSON
+                    body: JSON.stringify({ 
+                        nome: name, 
+                        email: email, 
+                        senha: password, 
+                        tipo_usuario: userType, 
+                        pin: pin 
+                    })
+                });
+
+                // Converte a resposta do servidor em JSON
+                const data = await response.json();
+
+                // Se o cadastro for bem-sucedido
+                if (response.ok) {
+                    showMessage(data.message, 'success');
+                    // Redireciona para a tela de login após 2 segundos
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 2000);
+                } else {
+                    // Exibe mensagem de erro retornada pelo servidor
+                    showMessage(data.message || 'Erro ao registrar usuário.', 'danger');
+                }
+            } catch (error) {
+                // Caso ocorra erro de rede ou servidor
+                console.error('Erro:', error);
+                showMessage('Erro de conexão. Tente novamente.', 'danger'); 
+            }
+        });
+    </script>
+</body>
+</html>

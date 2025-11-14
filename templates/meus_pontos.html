@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meus Pontos - Sistema de RH</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}?v={{ range(1, 1000) | random }}" type="image/x-icon">
+</head>
+<body>
+    <header>
+        <nav>
+            <h1>Meus Pontos</h1>
+            <ul class="nav-links"> <li><a href="/dashboard-page">Home</a></li>
+                <li>
+                    <img src="/static/images/logo TCC branca.png" alt="Logo da Empresa" class="header-logo">
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container">
+        <h2>Controle de Ponto</h2>
+        <div id="message-area" class="alert" style="display: none;"></div>
+
+        <div class="ponto-actions">
+            <button id="entrada-button" class="action-button">Registrar Entrada</button>
+            <button id="saida-button" class="action-button">Registrar Saída</button>
+        </div>
+
+        <div class="calendar-controls">
+            <div class="calendar-nav">
+                <button id="prev-month">&lt; Mês Anterior</button>
+            </div>
+            <div class="calendar-title" id="current-month">Agosto 2025</div>
+            <div class="calendar-nav">
+                <button id="next-month">Próximo Mês &gt;</button>
+            </div>
+        </div>
+
+        <table class="calendar" id="pontos-calendar">
+            <thead>
+                <tr>
+                    <th>Dom</th>
+                    <th>Seg</th>
+                    <th>Ter</th>
+                    <th>Qua</th>
+                    <th>Qui</th>
+                    <th>Sex</th>
+                    <th>Sáb</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- O calendário será gerado via JavaScript -->
+            </tbody>
+        </table>
+    </main>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            checkUserRole(['funcionario']);
+
+            let currentDate = new Date();
+            let currentMonth = currentDate.getMonth();
+            let currentYear = currentDate.getFullYear();
+
+            // Elementos do DOM
+            const calendarTitle = document.getElementById('current-month');
+            const calendarBody = document.querySelector('#pontos-calendar tbody');
+            const prevMonthBtn = document.getElementById('prev-month');
+            const nextMonthBtn = document.getElementById('next-month');
+
+            // Atualiza o calendário
+            function updateCalendar() {
+                // Atualiza o título
+                const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+                                    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+                calendarTitle.textContent = `${monthNames[currentMonth]} ${currentYear}`;
+
+                // Limpa o calendário
+                calendarBody.innerHTML = '';
+
+                // Obtém o primeiro dia do mês e quantos dias tem o mês
+                const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+                const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+                // Cria as linhas do calendário
+                let date = 1;
+                for (let i = 0; i < 6; i++) {
+                    // Cria uma linha
+                    const row = document.createElement('tr');
+
+                    // Cria as células para cada dia da semana
+                    for (let j = 0; j < 7; j++) {
+                        const cell = document.createElement('td');
+                        
+                        if (i === 0 && j < firstDay) {
+                            // Células vazias antes do primeiro dia do mês
+                            cell.textContent = '';
+                        } else if (date > daysInMonth) {
+                            // Células vazias após o último dia do mês
+                            cell.textContent = '';
+                        } else {
+                            // Células com os dias do mês
+                            const dayDiv = document.createElement('div');
+                            dayDiv.className = 'day-number';
+                            dayDiv.textContent = date;
+                            cell.appendChild(dayDiv);
+
+                            // Adiciona classe para fins de semana
+                            if (j === 0 || j === 6) {
+                                cell.classList.add('weekend');
+                            }
+
+                            // Adiciona classe para o dia atual
+                            const today = new Date();
+                            if (date === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear()) {
+                                cell.classList.add('current-day');
+                            }
+
+                            // Aqui você pode adicionar os pontos do dia
+                            // Exemplo:
+                            // const pontoDiv = document.createElement('div');
+                            // pontoDiv.className = 'ponto-info';
+                            // pontoDiv.textContent = 'Entrada: 08:00';
+                            // cell.appendChild(pontoDiv);
+
+                            date++;
+                        }
+
+                        row.appendChild(cell);
+                    }
+
+                    calendarBody.appendChild(row);
+
+                    // Para de criar linhas se já preenchemos todos os dias
+                    if (date > daysInMonth) {
+                        break;
+                    }
+                }
+
+                // Carrega os pontos para o mês atual
+                loadPontosForMonth();
+            }
+
+            // Carrega os pontos para o mês exibido
+            async function loadPontosForMonth() {
+                try {
+                    const response = await fetch(`/api/meus-pontos?month=${currentMonth + 1}&year=${currentYear}`, {
+                        method: 'GET',
+                        headers: getAuthHeaders()
+                    });
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        // Processa os pontos e adiciona ao calendário
+                        data.forEach(ponto => {
+                            const entradaDate = new Date(ponto.entrada);
+                            const day = entradaDate.getDate();
+                            const month = entradaDate.getMonth(); // Obtém o mês do ponto
+                            const year = entradaDate.getFullYear(); // Obtém o ano do ponto
+                            
+                            // Encontra a célula correspondente ao dia, MÊS e ANO
+                            const cells = document.querySelectorAll('#pontos-calendar td');
+                            cells.forEach(cell => {
+                                const dayDiv = cell.querySelector('.day-number');
+                                
+                                // Verifica se a célula corresponde ao dia, e se o mês e ano do ponto
+                                // são os mesmos do mês e ano que o calendário está exibindo.
+                                // currentMonth e currentYear já representam o mês e ano do calendário.
+                                if (dayDiv && 
+                                    parseInt(dayDiv.textContent) === day &&
+                                    month === currentMonth && // Adiciona verificação do mês
+                                    year === currentYear) {   // Adiciona verificação do ano
+                                    
+                                    const pontoDiv = document.createElement('div');
+                                    pontoDiv.className = 'ponto-info';
+                                    
+                                    let entradaTime = entradaDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}); // Formata a hora de entrada
+                                    let infoText = `Entrada: ${entradaTime}`; // Texto inicial com a hora de entrada
+                                    
+                                    if (ponto.saida) {
+                                        const saidaDate = new Date(ponto.saida);
+                                        let saidaTime = saidaDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}); // Formata a hora de saída
+                                        infoText += ` | Saída: ${saidaTime}`; // Adiciona a hora de saída ao texto
+                                    }
+                                    
+                                    pontoDiv.textContent = infoText;
+                                    cell.appendChild(pontoDiv); // Adiciona as informações do ponto à célula
+                                }
+                            });
+                        });
+                    }
+                } catch (error) {
+                    console.error('Erro ao carregar pontos:', error);
+                }
+            }
+
+            // Navegação do calendário
+            prevMonthBtn.addEventListener('click', () => {
+                currentMonth--;
+                if (currentMonth < 0) { // Volta para dezembro do ano anterior
+                    currentMonth = 11;
+                    currentYear--;
+                }
+                updateCalendar(); // Atualiza o calendário
+            });
+            // Próximo mês
+            nextMonthBtn.addEventListener('click', () => { // Avança para o próximo mês
+                currentMonth++;
+                if (currentMonth > 11) { // Avança para janeiro do próximo ano
+                    currentMonth = 0;
+                    currentYear++;
+                }
+                updateCalendar(); // Atualiza o calendário
+            });
+
+            // Botões de registro de ponto
+            document.getElementById('entrada-button').addEventListener('click', async () => { // Registra entrada
+                try {
+                    const response = await fetch('/api/ponto/entrada',{ 
+                        method: 'POST',
+                        headers: getAuthHeaders()
+                    }); // Chama a API para registrar entrada
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        showMessage(data.message, 'success');
+                        updateCalendar(); // Atualiza o calendário para mostrar o novo ponto
+                    } else {
+                        showMessage(data.message || 'Erro ao registrar entrada.', 'danger');
+                    }
+                } catch (error) {
+                    console.error('Erro ao registrar entrada:', error);
+                    showMessage('Erro de conexão ao registrar entrada.', 'danger');
+                }
+            });
+            
+            document.getElementById('saida-button').addEventListener('click', async () => { // Registra saída
+                try {
+                    const response = await fetch('/api/ponto/saida', {
+                        method: 'POST',
+                        headers: getAuthHeaders()
+                    });
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        showMessage(data.message, 'success');
+                        updateCalendar(); // Atualiza o calendário para mostrar a saída registrada
+                    } else {
+                        showMessage(data.message || 'Erro ao registrar saída.', 'danger');
+                    }
+                } catch (error) {
+                    console.error('Erro ao registrar saída:', error);
+                    showMessage('Erro de conexão ao registrar saída.', 'danger');
+                }
+            });
+
+            // Inicializa o calendário
+            updateCalendar();
+        });
+    </script>
+</body>
+</html>

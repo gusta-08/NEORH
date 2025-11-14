@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <!-- Configurações básicas -->
+    <meta charset="UTF-8"> <!-- Suporte a caracteres especiais -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Responsividade -->
+    
+    <!-- Título da aba -->
+    <title>Relatórios - Sistema de RH</title>
+    
+    <!-- Importa o CSS principal -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    
+    <!-- Favicon (com randomizador para evitar cache) -->
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}?v={{ range(1, 1000) | random }}" type="image/x-icon">
+    
+    <!-- Bibliotecas externas para geração de relatórios em PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body>
+    <!-- Cabeçalho -->
+    <header>
+        <nav>
+            <h1>Relatórios</h1>
+            <ul class="nav-links">
+                <li><a href="/dashboard-page">Home</a></li>
+                <li>
+                    <!-- Logo da empresa -->
+                    <img src="/static/images/logo TCC branca.png" alt="Logo da Empresa" class="header-logo">
+                </li>
+            </ul>
+            
+        </nav>
+    </header>
+
+    <!-- Conteúdo principal -->
+    <main class="container">
+        <h2>Relatórios Gerenciais</h2>
+
+        <!-- Calendário de pontos -->
+        <section class="report-section">
+            <h3>Calendário de Pontos da Equipe</h3>
+            
+            <!-- Controles de navegação no calendário -->
+            <div class="calendar-controls">
+                <div class="calendar-nav">
+                    <button id="prev-month">&lt; Mês Anterior</button>
+                </div>
+                <div class="calendar-title" id="current-month">Agosto 2025</div>
+                <div class="calendar-nav">
+                    <button id="next-month">Próximo Mês &gt;</button>
+                </div>
+            </div>
+            
+            <!-- Filtro de funcionário -->
+            <div class="filters">
+                <select id="filter-employee">
+                    <option value="">Todos os funcionários</option>
+                    <!-- Opções carregadas via JS -->
+                </select>
+            </div>
+            
+            <!-- Calendário será gerado aqui -->
+            <div id="calendar-container" class="manager-calendar"></div>
+        </section>
+
+        <!-- Relatório de feedbacks -->
+        <section class="report-section">
+            <h3>Relatório de Feedbacks Recebidos</h3>
+            <div class="table-responsive">
+                <table id="feedbacks-table">
+                    <thead>
+                        <tr>
+                            <th>Autor</th>
+                            <th>Mensagem</th>
+                            <th>Data de Envio</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Preenchido dinamicamente pelo JS -->
+                    </tbody>
+                </table>
+            </div>
+            <button id="load-feedbacks">Carregar Relatório de Feedbacks</button>
+        </section>
+
+        <!-- Relatório de atestados -->
+        <section class="report-section">
+            <h3>Relatório de Atestados Enviados</h3>
+            <div class="table-responsive">
+                <table id="atestados-table">
+                    <thead>
+                        <tr>
+                            <th>Funcionário</th>
+                            <th>Motivo</th>
+                            <th>Arquivo</th>
+                            <th>Data de Envio</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Preenchido dinamicamente pelo JS -->
+                    </tbody>
+                </table>
+            </div>
+            <button id="load-atestados">Carregar Relatório de Atestados</button>
+        </section>
+    </main>
+
+    <!-- Importa JS principal -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+
+    <!-- Script para relatórios -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Apenas gerentes têm acesso a relatórios
+            checkUserRole(['gerente']); 
+
+            // Referências para as tabelas
+            const allPointsTableBody = document.querySelector('#all-points-table tbody');
+            const feedbacksTableBody = document.querySelector('#feedbacks-table tbody');
+            const atestadosTableBody = document.querySelector('#atestados-table tbody');
+
+            /**
+             * Relatório de Pontos
+             * Busca registros de entrada/saída dos funcionários
+             */
+            async function loadAllPointsReport() {
+                allPointsTableBody.innerHTML = '<tr><td colspan="4">Carregando...</td></tr>'; // Indica carregamento
+                try {
+                    const response = await fetch('/api/gerente/relatorio-pontos', {
+                        method: 'GET',
+                        headers: getAuthHeaders()
+                    });
+                    const data = await response.json(); // Lista de pontos
+
+                    if (response.ok) {
+                        allPointsTableBody.innerHTML = ''; // Limpa tabela
+                        if (data.length > 0) {
+                            // Preenche tabela
+                            data.forEach(ponto => {
+                                const row = allPointsTableBody.insertRow(); // Nova linha
+                                row.insertCell().textContent = ponto.funcionario;
+                                row.insertCell().textContent = ponto.entrada ? new Date(ponto.entrada).toLocaleString() : 'N/A';
+                                row.insertCell().textContent = ponto.saida ? new Date(ponto.saida).toLocaleString() : 'Pendente'; 
+
+                                // Calcula duração
+                                let duracao = 'N/A';
+                                if (ponto.entrada && ponto.saida) { // Só calcula se houver entrada e saída
+                                    const entrada = new Date(ponto.entrada); // Data de entrada
+                                    const saida = new Date(ponto.saida); // Data de saída
+                                    const diffMs = saida - entrada; // Diferença em milissegundos
+                                    const diffHours = Math.floor(diffMs / (1000 * 60 * 60)); // Horas completas
+                                    const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60)); // Minutos restantes
+                                    duracao = `${diffHours}h ${diffMinutes}m`; // Formato "Xh Ym"
+                                }
+                                row.insertCell().textContent = duracao;
+                            });
+                        } else {
+                            allPointsTableBody.innerHTML = '<tr><td colspan="4">Nenhum ponto registrado.</td></tr>';
+                        }
+                    } else {
+                        showMessage(data.message || 'Erro ao carregar relatório de pontos.', 'danger');
+                    }
+                } catch (error) {
+                    console.error('Erro:', error);
+                    showMessage('Erro de conexão ao carregar relatório de pontos.', 'danger');
+                }
+            }
+
+            /**
+             * Relatório de Feedbacks
+             * Lista mensagens enviadas por funcionários
+             */
+            async function loadFeedbacksReport() {
+                feedbacksTableBody.innerHTML = '<tr><td colspan="5">Carregando...</td></tr>';
+                try {
+                    const response = await fetch('/api/feedbacks', {
+                        method: 'GET',
+                        headers: getAuthHeaders()
+                    });
+                    const data = await response.json(); // Lista de feedbacks
+
+                    if (response.ok) {
+                        feedbacksTableBody.innerHTML = '';
+                        if (data.length > 0) {
+                            data.forEach(feedback => {
+                                const row = feedbacksTableBody.insertRow();
+                                row.insertCell().textContent = feedback.autor;
+                                row.insertCell().textContent = feedback.mensagem;
+                                row.insertCell().textContent = new Date(feedback.criado_em).toLocaleString();
+                                row.insertCell().textContent = feedback.visualizado ? 'Visualizado' : 'Não visualizado';
+                                
+                                // Célula de ações
+                                const acoesCell = row.insertCell();
+                                const visualizarBtn = document.createElement('button');
+                                visualizarBtn.textContent = 'Marcar como visualizado';
+                                visualizarBtn.className = 'action-button';
+                                visualizarBtn.onclick = async () => {
+                                    try {
+                                        const updateResponse = await fetch(`/api/feedbacks/${feedback.id}/visualizar`, {
+                                            method: 'PUT',
+                                            headers: getAuthHeaders()
+                                        });
+                                        
+                                        if (updateResponse.ok) {
+                                            showMessage('Feedback marcado como visualizado.', 'success');
+                                            loadFeedbacksReport(); // Recarrega a lista
+                                        } else {
+                                            showMessage('Erro ao atualizar status do feedback.', 'danger');
+                                        }
+                                    } catch (error) {
+                                        console.error('Erro:', error);
+                                        showMessage('Erro ao atualizar status do feedback.', 'danger');
+                                    }
+                                };
+                                acoesCell.appendChild(visualizarBtn);
+                            });
+                        } else {
+                            feedbacksTableBody.innerHTML = '<tr><td colspan="5">Nenhum feedback recebido.</td></tr>';
+                        }
+                    } else {
+                        showMessage(data.message || 'Erro ao carregar feedbacks.', 'danger');
+                    }
+                } catch (error) {
+                    console.error('Erro:', error);
+                    showMessage('Erro de conexão ao carregar feedbacks.', 'danger');
+                }
+            }
+
+            /**
+             * Relatório de Atestados
+             * Lista atestados médicos enviados pelos funcionários
+             */
+            async function loadAtestadosReport() {
+                atestadosTableBody.innerHTML = '<tr><td colspan="6">Carregando...</td></tr>';
+                try {
+                    const response = await fetch('/api/atestados', {
+                        method: 'GET',
+                        headers: getAuthHeaders()
+                    });
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        atestadosTableBody.innerHTML = '';
+                        if (data.length > 0) {
+                            data.forEach(atestado => {
+                                const row = atestadosTableBody.insertRow();
+                                row.insertCell().textContent = atestado.funcionario;
+                                row.insertCell().textContent = atestado.motivo;
+
+                                // Link para download do arquivo
+                                const fileLink = document.createElement('a');
+                                fileLink.href = `/static/uploads/${atestado.arquivo}`;
+                                fileLink.textContent = atestado.arquivo;
+                                fileLink.target = '_blank';
+                                row.insertCell().appendChild(fileLink);
+
+                                row.insertCell().textContent = new Date(atestado.criado_em).toLocaleString();
+                                row.insertCell().textContent = atestado.visualizado ? 'Visualizado' : 'Não visualizado';
+
+                                // Célula de ações
+                                const acoesCell = row.insertCell();
+                                const visualizarBtn = document.createElement('button');
+                                visualizarBtn.textContent = 'Marcar como visualizado';
+                                visualizarBtn.className = 'action-button';
+                                visualizarBtn.onclick = async () => {
+                                    try {
+                                        const updateResponse = await fetch(`/api/atestados/${atestado.id}/visualizar`, {
+                                            method: 'PUT',
+                                            headers: getAuthHeaders()
+                                        });
+                                        
+                                        if (updateResponse.ok) {
+                                            showMessage('Atestado marcado como visualizado.', 'success');
+                                            loadAtestadosReport(); // Recarrega a lista
+                                        } else {
+                                            showMessage('Erro ao atualizar status do atestado.', 'danger');
+                                        }
+                                    } catch (error) {
+                                        console.error('Erro:', error);
+                                        showMessage('Erro ao atualizar status do atestado.', 'danger');
+                                    }
+                                };
+                                acoesCell.appendChild(visualizarBtn);
+                            });
+                        } else {
+                            atestadosTableBody.innerHTML = '<tr><td colspan="6">Nenhum atestado enviado.</td></tr>';
+                        }
+                    } else {
+                        showMessage(data.message || 'Erro ao carregar atestados.', 'danger');
+                    }
+                } catch (error) {
+                    console.error('Erro:', error);
+                    showMessage('Erro de conexão ao carregar atestados.', 'danger');
+                }
+            }
+
+            // Botões para carregar relatórios manualmente
+            document.getElementById('load-feedbacks').addEventListener('click', loadFeedbacksReport);
+            document.getElementById('load-atestados').addEventListener('click', loadAtestadosReport);
+
+            // Carregamento automático ao abrir a página
+            loadFeedbacksReport();
+            loadAtestadosReport();
+        });
+
+        /**
+         * CALENDÁRIO DE PONTOS
+         */
+        let currentDate = new Date();
+        let currentMonth = currentDate.getMonth();
+        let currentYear = currentDate.getFullYear();
+        let selectedEmployee = '';
+
+        const calendarTitle = document.getElementById('current-month');
+        const calendarContainer = document.getElementById('calendar-container');
+        const prevMonthBtn = document.getElementById('prev-month');
+        const nextMonthBtn = document.getElementById('next-month');
+        const employeeFilter = document.getElementById('filter-employee');
+
+        // Carrega lista de funcionários para o filtro
+        async function loadEmployeesForFilter() {
+            try {
+                const response = await fetch('/api/gerente/funcionarios', {
+                    method: 'GET', 
+                    headers: getAuthHeaders() // Busca lista de funcionários
+                });
+                const data = await response.json(); // Lista de funcionários
+
+                if (response.ok && data.length > 0) {
+                    data.forEach(employee => {
+                        const option = document.createElement('option'); // Cria nova opção
+                        option.value = employee.id; // Valor do funcionário
+                        option.textContent = employee.nome; // Nome do funcionário
+                        employeeFilter.appendChild(option); // Adiciona funcionário ao filtro
+                    });
+                }
+            } catch (error) {
+                console.error('Erro ao carregar funcionários:', error); // Erro ao carregar funcionários
+            }
+        }
+
+        // Atualiza o calendário com pontos
+        async function updateCalendar() {
+            const monthNames = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho",
+                               "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"]; // Nomes dos meses
+            calendarTitle.textContent = `${monthNames[currentMonth]} ${currentYear}`; // Atualiza título do mês
+            // Busca pontos do mês/ano selecionado
+            try {
+                let url = `/api/gerente/relatorio-pontos-calendario?month=${currentMonth + 1}&year=${currentYear}`; // Mês é 1-12
+                if (selectedEmployee) {
+                    url += `&employee_id=${selectedEmployee}`; // Filtra por funcionário
+                }
+
+                const response = await fetch(url, { method: 'GET', headers: getAuthHeaders() }); // Busca pontos do mês/ano selecionado
+                const pontos = await response.json(); 
+
+                if (response.ok) renderCalendar(pontos); // Renderiza o calendário com os pontos
+                else showMessage('Erro ao carregar pontos do calendário.', 'danger');
+            } catch (error) {
+                console.error('Erro ao carregar pontos:', error);// Erro ao carregar pontos
+            }
+        }
+
+        // Renderiza calendário
+        function renderCalendar(pontos) {
+            const firstDay = new Date(currentYear, currentMonth, 1).getDay(); // Primeiro dia do mês
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate(); // Último dia do mês
+            const today = new Date(); // Data atual
+
+            // Organiza pontos por dia
+            const pontosPorDia = {}; 
+            pontos.forEach(ponto => {
+                const date = new Date(ponto.entrada); // Data da entrada
+                const day = date.getDate(); // Dia do mês
+                const dateKey = `${currentYear}-${(currentMonth+1).toString().padStart(2,'0')}-${day.toString().padStart(2,'0')}`; // Formato YYYY-MM-DD
+                if (!pontosPorDia[dateKey]) pontosPorDia[dateKey] = []; 
+                pontosPorDia[dateKey].push(ponto); 
+            }); // Agrupa pontos por dia
+
+            // Estrutura do calendário
+            let calendarHTML = `
+                <table class="calendar">
+                    <thead>
+                        <tr>
+                            <th>Dom</th><th>Seg</th><th>Ter</th><th>Qua</th><th>Qui</th><th>Sex</th><th>Sáb</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+
+            let date = 1; // Dia do mês
+            for (let i = 0; i < 6; i++) {
+                if (date > daysInMonth) break;
+                calendarHTML += '<tr>'; // Inicia uma nova linha
+                for (let j = 0; j < 7; j++) {
+                    if (i === 0 && j < firstDay || date > daysInMonth) {
+                        calendarHTML += '<td></td>'; // Célula vazia
+                    } else {
+                        const dateKey = `${currentYear}-${(currentMonth+1).toString().padStart(2,'0')}-${date.toString().padStart(2,'0')}`;
+                        const isToday = date === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear();
+                        const isWeekend = j === 0 || j === 6; // Domingo ou Sábado
+                        
+                        let cellClass = ''; // Classes para estilização
+                        if (isToday) cellClass += ' current-day'; // Dia atual
+                        if (isWeekend) cellClass += ' weekend'; // Fim de semana
+                        
+                        calendarHTML += `<td class="${cellClass.trim()}">`; // Célula do dia
+                        calendarHTML += `<div class="day-number">${date}</div>`; // Número do dia
+                        
+                        // Exibe pontos do dia
+                        if (pontosPorDia[dateKey]) {
+                            pontosPorDia[dateKey].forEach(ponto => {
+                                const entrada = new Date(ponto.entrada).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); // Entrada formatada
+                                let saida = ponto.saida ? new Date(ponto.saida).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : 'Pendente';
+                                // Informações do ponto
+                                calendarHTML += ` 
+                                    <div class="ponto-info">
+                                        <strong>${ponto.funcionario}</strong><br>
+                                        Entrada: ${entrada}<br>
+                                        Saída: ${saida}
+                                    </div>`; // Informações do ponto
+                            });
+                        }
+                        calendarHTML += '</td>';
+                        date++; // Próximo dia
+                    }
+                }
+                calendarHTML += '</tr>'; // Fecha a linha do calendário
+            }
+            calendarHTML += `</tbody></table>`;
+            calendarContainer.innerHTML = calendarHTML; // Atualiza o HTML do calendário
+        } 
+
+        // Controles de navegação
+        prevMonthBtn.addEventListener('click', () => {
+            currentMonth--;
+            if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+            updateCalendar();
+        }); // Volta para o mês anterior
+
+        nextMonthBtn.addEventListener('click', () => {
+            currentMonth++;
+            if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+            updateCalendar();
+        }); // Avança para o próximo mês
+
+        employeeFilter.addEventListener('change', (e) => {
+            selectedEmployee = e.target.value;
+            updateCalendar();
+        }); // Filtra por funcionário
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', () => {
+            loadEmployeesForFilter();
+            updateCalendar();
+        });
+    </script>
+</body>
+</html>
